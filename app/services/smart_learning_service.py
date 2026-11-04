@@ -93,7 +93,7 @@ def get_adaptive_metrics(db: Session, topic_id: Optional[str] = None) -> Dict[st
     query = db.query(
         QuizQuestion.subtopic,
         func.count(QuestionAttempt.id).label("total_attempts"),
-        func.sum(func.cast(QuestionAttempt.is_correct, func.INTEGER if "sqlite" in str(db.bind.url) else func.INTEGER)).label("correct_attempts"),
+        func.sum(case((QuestionAttempt.is_correct == True, 1), else_=0)).label("correct_attempts"),
         func.avg(func.coalesce(QuestionAttempt.response_time_ms, 12000)).label("avg_time_ms")
     ).join(QuestionAttempt, QuizQuestion.id == QuestionAttempt.question_id)
 
