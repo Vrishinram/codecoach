@@ -1,10 +1,42 @@
 /**
- * Real-time WebSocket Chat with Streaming & Syntax Highlighting
+ * Real-time Chat with Markdown Rendering, C# Syntax Highlighting, & Fallback Streaming
  */
 
 let chatSocket = null;
 let chatHistory = [];
 let activeStreamBubble = null;
+let useHttpFallback = false;
+let socketConnectAttempts = 0;
+
+// Setup marked.js renderer
+if (window.marked) {
+  const customRenderer = new marked.Renderer();
+
+  customRenderer.code = function(code, lang) {
+    const language = (lang && hljs.getLanguage(lang)) ? lang : 'csharp';
+    let highlighted = '';
+    try {
+      highlighted = hljs.highlight(code, { language }).value;
+    } catch (e) {
+      highlighted = hljs.highlightAuto(code).value;
+    }
+    return `<div class="code-block-wrapper">
+      <div class="code-block-header">
+        <span class="code-lang-tag">${language}</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code class="hljs language-${language}">${highlighted}</code></pre>
+    </div>`;
+  };
+
+  marked.setOptions({
+    renderer: customRenderer,
+    gfm: true,
+    breaks: true,
+    mangle: false,
+    headerIds: false
+  });
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   initChatWebSocket();
@@ -15,29 +47,43 @@ function initChatWebSocket() {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const wsUrl = `${protocol}//${window.location.host}/ws/chat`;
 
-  chatSocket = new WebSocket(wsUrl);
+  try {
+    chatSocket = new WebSocket(wsUrl);
 
-  chatSocket.onopen = () => {
-    console.log('Chat WebSocket connected.');
-  };
+    chatSocket.onopen = () => {
+      console.log('Chat WebSocket connected.');
+      useHttpFallback = false;
+      socketConnectAttempts = 0;
+    };
 
-  chatSocket.onmessage = (event) => {
-    try {
-      const msg = JSON.parse(event.data);
-      handleIncomingChatMessage(msg);
-    } catch (e) {
-      console.error('Error parsing WS message:', e);
-    }
-  };
+    chatSocket.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        handleIncomingChatMessage(msg);
+      } catch (e) {
+        console.error('Error parsing WS message:', e);
+      }
+    };
 
-  chatSocket.onclose = () => {
-    console.warn('Chat WebSocket disconnected. Reconnecting in 3 seconds...');
-    setTimeout(initChatWebSocket, 3000);
-  };
+    chatSocket.onclose = () => {
+      socketConnectAttempts++;
+      // If repeatedly closed (e.g. on Vercel serverless functions), switch to HTTP fallback
+      if (socketConnectAttempts >= 2) {
+        console.warn('WebSocket unavailable in this environment (e.g. Vercel serverless). Using HTTP chat fallback.');
+        useHttpFallback = true;
+      } else {
+        setTimeout(initChatWebSocket, 3000);
+      }
+    };
 
-  chatSocket.onerror = (err) => {
-    console.error('Chat WebSocket error:', err);
-  };
+    chatSocket.onerror = (err) => {
+      console.warn('Chat WebSocket connection failed; HTTP fallback enabled.');
+      useHttpFallback = true;
+    };
+  } catch (err) {
+    console.warn('WebSocket init exception; falling back to HTTP:', err);
+    useHttpFallback = true;
+  }
 }
 
 function handleIncomingChatMessage(msg) {
@@ -60,7 +106,6 @@ function handleIncomingChatMessage(msg) {
     if (activeStreamBubble) {
       const textSpan = activeStreamBubble.querySelector('.stream-text');
       const rawText = textSpan.textContent;
-      // Format markdown & code blocks
       const bubble = activeStreamBubble.querySelector('.message-bubble');
       bubble.innerHTML = formatMarkdown(rawText);
       highlightCodeBlocks(bubble);
@@ -124,23 +169,65 @@ function initChatForm() {
   const form = document.getElementById('chatForm');
   const input = document.getElementById('chatInput');
 
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const text = input.value.trim();
-    if (!text || !chatSocket || chatSocket.readyState !== WebSocket.OPEN) return;
+    if (!text) return;
+
+    input.value = '';
 
     // Render user bubble
     renderMessageBubble('user', text);
     chatHistory.push({ sender: 'user', content: text });
 
-    // Send to WebSocket
-    chatSocket.send(JSON.stringify({
-      content: text,
-      history: chatHistory.slice(-8)
-    }));
-
-    input.value = '';
+    // If WebSocket is open and working, send over WS
+    if (!useHttpFallback && chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+      chatSocket.send(JSON.stringify({
+        content: text,
+        history: chatHistory.slice(-8)
+      }));
+    } else {
+      // Fallback: send via HTTP
+      await sendHttpChatMessage(text);
+    }
   });
+}
+
+async function sendHttpChatMessage(text) {
+  const container = document.getElementById('chatMessages');
+  const streamBubble = createStreamingBubble();
+  const textSpan = streamBubble.querySelector('.stream-text');
+  textSpan.textContent = 'Thinking...';
+  container.appendChild(streamBubble);
+  container.scrollTop = container.scrollHeight;
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content: text,
+        history: chatHistory.slice(-8)
+      })
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    streamBubble.remove();
+
+    if (data.type === 'command_action') {
+      executeCommandAction(data);
+    } else {
+      renderMessageBubble('assistant', data.content || 'No response.');
+      chatHistory.push({ sender: 'assistant', content: data.content });
+    }
+  } catch (err) {
+    streamBubble.remove();
+    renderMessageBubble('assistant', `⚠️ Could not send message: ${err.message}. Please check your connection.`);
+  }
 }
 
 function insertSlashCommand(cmd) {
@@ -173,26 +260,51 @@ function executeCommandAction(data) {
 // Markdown & Code Highlighter Helpers
 function formatMarkdown(text) {
   if (!text) return '';
+
+  // Use marked.js if available for complete GitHub-flavored Markdown
+  if (window.marked && typeof window.marked.parse === 'function') {
+    try {
+      return window.marked.parse(text);
+    } catch (err) {
+      console.warn('marked.js parsing error, using fallback:', err);
+    }
+  }
+
+  // Robust Regex Fallback
   let escaped = text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 
-  // Triple backtick code blocks
+  // Code blocks
   escaped = escaped.replace(/```(csharp|cs|json|sql|bash)?([\s\S]*?)```/g, (match, lang, code) => {
     const language = lang || 'csharp';
-    return `<pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code class="language-${language}">${code.trim()}</code></pre>`;
+    return `<div class="code-block-wrapper">
+      <div class="code-block-header">
+        <span class="code-lang-tag">${language}</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code class="language-${language}">${code.trim()}</code></pre>
+    </div>`;
   });
 
-  // Single backtick inline code
-  escaped = escaped.replace(/`([^`]+)`/g, '<code style="background: rgba(30,41,59,0.8); padding: 2px 5px; border-radius: 4px; font-family: var(--font-mono); font-size: 13px;">$1</code>');
+  // Inline code
+  escaped = escaped.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
 
-  // Bold
+  // Headings
+  escaped = escaped.replace(/^### (.*$)/gim, '<h3 style="font-size: 16px; margin: 12px 0 6px 0; font-weight: 700;">$1</h3>');
+  escaped = escaped.replace(/^## (.*$)/gim, '<h2 style="font-size: 18px; margin: 14px 0 8px 0; font-weight: 700;">$1</h2>');
+  escaped = escaped.replace(/^# (.*$)/gim, '<h1 style="font-size: 20px; margin: 16px 0 8px 0; font-weight: 700;">$1</h1>');
+
+  // Bold & Italic
   escaped = escaped.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  // Italic
   escaped = escaped.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-  // Newlines to <br> if not in pre
-  escaped = escaped.replace(/\n/g, '<br>');
+
+  // Bullet items
+  escaped = escaped.replace(/^\s*[-•*]\s+(.*$)/gim, '<div style="display: flex; gap: 8px; margin: 4px 0;"><span>•</span><span>$1</span></div>');
+
+  // Paragraph breaks
+  escaped = escaped.replace(/\n\n/g, '<div style="height: 10px;"></div>');
 
   return escaped;
 }
@@ -204,13 +316,16 @@ function highlightCodeBlocks(container) {
 }
 
 function copyCode(btn) {
-  const pre = btn.parentElement;
-  const code = pre.querySelector('code');
+  const wrapper = btn.closest('.code-block-wrapper') || btn.parentElement;
+  const code = wrapper.querySelector('code');
   if (code) {
     navigator.clipboard.writeText(code.innerText).then(() => {
       btn.textContent = 'Copied!';
-      setTimeout(() => btn.textContent = 'Copy', 2000);
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'Copy';
+        btn.classList.remove('copied');
+      }, 2000);
     });
   }
 }
-

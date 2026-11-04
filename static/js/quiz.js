@@ -16,12 +16,26 @@ async function startTopicTraining(topicId) {
   currentTopicId = topicId;
   const container = document.getElementById('quizContent');
   container.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-muted);">
-    <div style="font-size: 24px; margin-bottom: 8px;">⏳</div>
-    <div>Preparing training set for <strong>${topicId}</strong>...</div>
+    <div style="font-size: 28px; margin-bottom: 12px; animation: pulse 1.5s infinite;">⏳</div>
+    <div style="font-size: 16px; font-weight: 600; color: var(--text-main); margin-bottom: 6px;">Loading Training Set</div>
+    <div style="font-size: 13.5px;">Retrieving 25 questions for <strong>${topicId}</strong>...</div>
   </div>`;
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 12000);
+
   try {
-    const res = await fetch(`/api/quiz/start/${topicId}`, { method: 'POST' });
+    const res = await fetch(`/api/quiz/start/${topicId}`, { 
+      method: 'POST',
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.detail || `Server returned HTTP ${res.status}`);
+    }
+
     const data = await res.json();
     currentSetId = data.set_id;
 
@@ -33,9 +47,13 @@ async function startTopicTraining(topicId) {
       fetchNextQuestion();
     }
   } catch (err) {
-    container.innerHTML = `<div class="quiz-card" style="border-color: #ef4444;">
-      <h3 style="color: #ef4444; margin-bottom: 8px;">Failed to start set</h3>
-      <p>${err.message}</p>
+    clearTimeout(timeoutId);
+    const msg = err.name === 'AbortError' ? 'Request timed out after 12s' : err.message;
+    container.innerHTML = `<div class="quiz-card" style="border-color: #ef4444; text-align: center; padding: 32px 20px;">
+      <div style="font-size: 32px; margin-bottom: 12px;">⚠️</div>
+      <h3 style="color: #ef4444; margin-bottom: 8px;">Unable to Load Training Set</h3>
+      <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">${msg}</p>
+      <button class="btn-primary" onclick="startTopicTraining('${topicId}')">🔄 Try Again</button>
     </div>`;
   }
 }

@@ -18,7 +18,7 @@ from app.llm.client import llm_client
 from app.services.curriculum_service import seed_curriculum_if_needed
 from app.services.link_validator import seed_links_if_needed, validate_all_links
 from app.services.scheduler_service import init_scheduler, shutdown_scheduler
-from app.api.websocket import websocket_chat_endpoint
+from app.api.websocket import websocket_chat_endpoint, router as chat_router
 from app.api.routes_quiz import router as quiz_router
 from app.api.routes_progress import router as progress_router
 from app.api.routes_notifications import router as notifications_router
@@ -120,6 +120,7 @@ app.add_middleware(
 )
 
 # API Routers
+app.include_router(chat_router, dependencies=[Depends(check_optional_auth)])
 app.include_router(quiz_router, dependencies=[Depends(check_optional_auth)])
 app.include_router(progress_router, dependencies=[Depends(check_optional_auth)])
 app.include_router(notifications_router, dependencies=[Depends(check_optional_auth)])
