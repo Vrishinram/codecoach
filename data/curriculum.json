@@ -1,0 +1,268 @@
+[
+  {
+    "id": "csharp-basics",
+    "title": "C# Basics",
+    "order": 1,
+    "description": "Fundamental syntax, type system, control flow, and core methods in C#.",
+    "topics": [
+      {
+        "id": "variables-and-types",
+        "title": "Variables & Data Types",
+        "order": 1,
+        "description": "Value types vs reference types, primitive types (int, double, bool, char, decimal), var keyword, nullable value types, and type casting.",
+        "subtopics": ["value vs reference types", "primitive types", "var keyword", "nullable types", "type casting & conversion"]
+      },
+      {
+        "id": "operators-and-expressions",
+        "title": "Operators & Expressions",
+        "order": 2,
+        "description": "Arithmetic, logical, relational, bitwise, null-coalescing (??, ??=), and null-conditional (?.) operators.",
+        "subtopics": ["arithmetic & assignment", "comparison & logical", "null-coalescing (?? and ??=)", "null-conditional operator (?.)", "pattern matching expressions"]
+      },
+      {
+        "id": "conditions-and-branching",
+        "title": "Conditions & Branching",
+        "order": 3,
+        "description": "if-else, switch statements, switch expressions with pattern matching, and relational patterns in modern C#.",
+        "subtopics": ["if-else blocks", "switch statements", "switch expressions", "type pattern matching", "guard clauses"]
+      },
+      {
+        "id": "loops-and-iterations",
+        "title": "Loops & Iterations",
+        "order": 4,
+        "description": "for, foreach, while, do-while loops, break, continue, and iterations over IEnumerable collections.",
+        "subtopics": ["for loop", "while & do-while", "foreach loop", "break & continue", "nested loops & scope"]
+      },
+      {
+        "id": "methods-and-parameters",
+        "title": "Methods & Parameters",
+        "order": 5,
+        "description": "Method signatures, return types, ref, out, in modifiers, params arrays, optional parameters, and expression-bodied methods.",
+        "subtopics": ["method declarations", "ref and out parameters", "params modifier", "optional & named arguments", "expression-bodied members"]
+      },
+      {
+        "id": "arrays-and-spans",
+        "title": "Arrays & Strings",
+        "order": 6,
+        "description": "Single and multidimensional arrays, string immutability, StringBuilder, string interpolation, raw string literals, and Span<T> intro.",
+        "subtopics": ["array declarations & indexing", "string manipulation & methods", "string interpolation ($)", "StringBuilder for performance", "Span<T> and ReadOnlySpan<T> basics"]
+      }
+    ]
+  },
+  {
+    "id": "object-oriented-programming",
+    "title": "OOP in C#",
+    "order": 2,
+    "description": "Core object-oriented programming paradigms, polymorphism, and contracts.",
+    "topics": [
+      {
+        "id": "classes-and-objects",
+        "title": "Classes, Records & Objects",
+        "order": 1,
+        "description": "Constructors, primary constructors, fields, auto-properties, init-only setters, record types, and value equality.",
+        "subtopics": ["constructors & initialization", "properties & backing fields", "init-only setters", "record types & with-expression", "static classes & members"]
+      },
+      {
+        "id": "encapsulation-and-access",
+        "title": "Encapsulation & Access Modifiers",
+        "order": 2,
+        "description": "public, private, protected, internal, protected internal, and private protected modifiers; invariant protection.",
+        "subtopics": ["access modifiers hierarchy", "encapsulation best practices", "properties vs public fields", "internal vs protected internal"]
+      },
+      {
+        "id": "inheritance-and-base",
+        "title": "Inheritance & Base Classes",
+        "order": 3,
+        "description": "Single class inheritance, base keyword, constructor chaining, sealed classes, and object slicing avoidance.",
+        "subtopics": ["derived classes", "base constructor invocation", "sealed classes & methods", "System.Object overrides (ToString, Equals, GetHashCode)"]
+      },
+      {
+        "id": "polymorphism-and-overriding",
+        "title": "Polymorphism & Virtual Members",
+        "order": 4,
+        "description": "virtual, override, new keyword (shadowing), abstract methods, dynamic dispatch, and runtime method tables.",
+        "subtopics": ["virtual methods", "override vs new keywords", "runtime polymorphism & vtable", "abstract classes vs concrete implementations"]
+      },
+      {
+        "id": "interfaces-and-contracts",
+        "title": "Interfaces & Explicit Implementation",
+        "order": 5,
+        "description": "Defining interfaces, multiple interface implementation, explicit interface implementation, and default interface methods.",
+        "subtopics": ["interface contracts", "multiple interface inheritance", "explicit interface implementation", "default interface methods (DIM)"]
+      }
+    ]
+  },
+  {
+    "id": "intermediate-csharp",
+    "title": "Intermediate C#",
+    "order": 3,
+    "description": "Generics, LINQ, functional constructs, asynchronous programming, and system I/O.",
+    "topics": [
+      {
+        "id": "generics-and-constraints",
+        "title": "Generics & Constraints",
+        "order": 1,
+        "description": "Generic classes, interfaces, methods, type constraints (where T : class, struct, new(), notnull), covariance and contravariance.",
+        "subtopics": ["generic classes & methods", "generic constraints (where)", "default(T)", "covariance (out) & contravariance (in)"]
+      },
+      {
+        "id": "collections-and-enumerators",
+        "title": "Collections & Enumerables",
+        "order": 2,
+        "description": "List<T>, Dictionary<TKey, TValue>, HashSet<T>, Queue, Stack, yield return, and IEnumerable<T> execution.",
+        "subtopics": ["List and arrays", "Dictionary and HashSets", "yield return & lazy evaluation", "Concurrent collections"]
+      },
+      {
+        "id": "linq-query-and-method",
+        "title": "LINQ (Language Integrated Query)",
+        "order": 3,
+        "description": "Method syntax vs query syntax, Where, Select, SelectMany, GroupBy, Join, OrderBy, FirstOrDefault, and deferred execution.",
+        "subtopics": ["method vs query syntax", "filtering & projection (Where, Select)", "aggregations & grouping (GroupBy, Aggregate)", "deferred execution vs immediate execution (.ToList())"]
+      },
+      {
+        "id": "delegates-events-lambdas",
+        "title": "Delegates, Events & Lambdas",
+        "order": 4,
+        "description": "Action<T>, Func<T, TResult>, Predicate<T>, multicast delegates, event publishing and subscription, memory leak prevention.",
+        "subtopics": ["custom delegates", "Action and Func built-ins", "lambda expressions & closures", "events and event handlers"]
+      },
+      {
+        "id": "exception-handling",
+        "title": "Exception Handling",
+        "order": 5,
+        "description": "try, catch, finally, exception filters (when), custom exceptions, throw vs throw ex, and unhandled exception logging.",
+        "subtopics": ["try-catch-finally semantics", "exception filters (when)", "throw vs throw ex stack preservation", "custom exception design"]
+      },
+      {
+        "id": "async-await-concurrency",
+        "title": "Async / Await & Concurrency",
+        "order": 6,
+        "description": "Task, Task<T>, ValueTask, async/await mechanics, ConfigureAwait, Task.WhenAll, Task.WhenAny, cancellation tokens, and deadlocks.",
+        "subtopics": ["Task vs Thread", "async and await keywords", "CancellationToken usage", "Task.WhenAll & parallel execution", "avoiding sync-over-async (.Result/.Wait)"]
+      },
+      {
+        "id": "file-io-and-streams",
+        "title": "File I/O & Streams",
+        "order": 7,
+        "description": "File, Directory, Path, FileStream, StreamReader/Writer, using statements (IDisposable), and async file processing.",
+        "subtopics": ["File and Path utilities", "Streams and buffers", "IDisposable and 'using' declarations", "async stream reading & writing"]
+      }
+    ]
+  },
+  {
+    "id": "dotnet-and-aspnet-core",
+    "title": ".NET & ASP.NET Core",
+    "order": 4,
+    "description": "Modern web development with ASP.NET Core, HTTP pipelines, and clean API design.",
+    "topics": [
+      {
+        "id": "dependency-injection",
+        "title": "Dependency Injection (DI)",
+        "order": 1,
+        "description": "Service lifetimes (Transient, Scoped, Singleton), IServiceCollection, factory registration, circular dependencies, and captive dependencies.",
+        "subtopics": ["Transient, Scoped, Singleton lifetimes", "registering and injecting services", "captive dependencies hazard", "keyed services in .NET 8+"]
+      },
+      {
+        "id": "middleware-pipeline",
+        "title": "Middleware & HTTP Pipeline",
+        "order": 2,
+        "description": "Request pipeline, app.Use, app.Run, custom middleware classes, exception handling middleware, and order of middleware execution.",
+        "subtopics": ["middleware execution order", "Use vs Run vs Map", "custom middleware class & InvokeAsync", "global error handling middleware"]
+      },
+      {
+        "id": "rest-apis-and-minimal-apis",
+        "title": "REST APIs & Minimal APIs",
+        "order": 3,
+        "description": "Controllers vs Minimal APIs (MapGet, MapPost), routing, HTTP status codes, Results/IResult, and OpenAPI/Swagger integration.",
+        "subtopics": ["Controllers vs Minimal APIs", "HTTP verbs & idempotent semantics", "TypedResults and status codes", "OpenAPI & Swagger documentation"]
+      },
+      {
+        "id": "routing-and-model-binding",
+        "title": "Routing, Model Binding & Validation",
+        "order": 4,
+        "description": "Route templates, query string/route/body parameter binding, DataAnnotations, FluentValidation, and automatic 400 responses.",
+        "subtopics": ["route parameters & constraints", "FromQuery, FromRoute, FromBody", "DataAnnotations validation", "ProblemDetails RFC 7807"]
+      }
+    ]
+  },
+  {
+    "id": "data-and-efcore",
+    "title": "Data & Entity Framework Core",
+    "order": 5,
+    "description": "Data persistence, ORM mechanics, schema migrations, and clean repository abstractions.",
+    "topics": [
+      {
+        "id": "efcore-basics-and-dbcontext",
+        "title": "EF Core Basics & DbContext",
+        "order": 1,
+        "description": "DbContext, DbSet<T>, OnConfiguring, connection strings, entity state tracking, and SaveChangesAsync.",
+        "subtopics": ["DbContext configuration & DI", "DbSet operations", "ChangeTracker and EntityState", "AsNoTracking for read performance"]
+      },
+      {
+        "id": "entity-relationships-and-fluent-api",
+        "title": "Entity Relationships & Fluent API",
+        "order": 2,
+        "description": "One-to-one, one-to-many, many-to-many relationships, navigation properties, foreign keys, and OnModelCreating Fluent API configurations.",
+        "subtopics": ["One-to-Many relationships", "Many-to-Many configurations", "Fluent API vs DataAnnotations", "Cascading deletes & foreign keys"]
+      },
+      {
+        "id": "migrations-and-database-updates",
+        "title": "EF Core Migrations",
+        "order": 3,
+        "description": "dotnet ef migrations add, update, script generation, seeding data, and handling breaking schema changes.",
+        "subtopics": ["creating & applying migrations", "migration scripts generation", "HasData entity seeding", "handling production migrations safely"]
+      },
+      {
+        "id": "repository-and-unit-of-work",
+        "title": "Repository Pattern & Data Access",
+        "order": 4,
+        "description": "Generic and specific repository patterns, Unit of Work, query specifications, and transaction management.",
+        "subtopics": ["repository pattern trade-offs with EF Core", "unit of work abstraction", "IQueryable leakage prevention", "database transactions"]
+      }
+    ]
+  },
+  {
+    "id": "advanced-dotnet",
+    "title": "Advanced .NET & Architecture",
+    "order": 6,
+    "description": "Security, automated testing, architecture patterns, SOLID principles, and production deployment.",
+    "topics": [
+      {
+        "id": "jwt-auth-and-security",
+        "title": "JWT Auth, Claims & Security",
+        "order": 1,
+        "description": "Authentication vs authorization, JWT token generation, ClaimsPrincipal, policy-based authorization, and CORS setup.",
+        "subtopics": ["JWT structure and signing", "AddAuthentication and AddJwtBearer", "Claims and Roles", "Policy-based authorization & CORS"]
+      },
+      {
+        "id": "unit-testing-with-xunit",
+        "title": "xUnit Testing & Mocking",
+        "order": 2,
+        "description": "xUnit [Fact] and [Theory], Moq/NSubstitute, FluentAssertions, WebApplicationFactory integration testing.",
+        "subtopics": ["xUnit test attributes (Fact, Theory, InlineData)", "AAA pattern (Arrange-Act-Assert)", "mocking dependencies with NSubstitute/Moq", "integration testing with WebApplicationFactory"]
+      },
+      {
+        "id": "solid-principles",
+        "title": "SOLID Principles in C#",
+        "order": 3,
+        "description": "Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, and Dependency Inversion in real .NET code.",
+        "subtopics": ["Single Responsibility Principle (SRP)", "Open/Closed Principle (OCP)", "Liskov Substitution Principle (LSP)", "Interface Segregation (ISP)", "Dependency Inversion (DIP)"]
+      },
+      {
+        "id": "clean-architecture-and-patterns",
+        "title": "Clean Architecture & Design Patterns",
+        "order": 4,
+        "description": "Domain, Application, Infrastructure, and API layers; MediatR (CQRS), Options pattern, Factory, and Decorator patterns.",
+        "subtopics": ["Clean Architecture layers & dependency direction", "CQRS with MediatR basics", "Options pattern (IOptionsSnapshot)", "common GoF design patterns in .NET"]
+      },
+      {
+        "id": "docker-and-deployment",
+        "title": "Deployment, Docker & Observability",
+        "order": 5,
+        "description": "Multi-stage Dockerfiles for ASP.NET Core, appsettings.json environments, health checks, OpenTelemetry, and structured logging with Serilog.",
+        "subtopics": ["multi-stage Docker builds", "environment configurations (Development vs Production)", "ASP.NET Core health checks", "structured logging (Serilog/ILogger)"]
+      }
+    ]
+  }
+]
+

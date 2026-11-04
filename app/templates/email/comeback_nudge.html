@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ subject }}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #0f172a; margin: 0; padding: 24px; color: #f8fafc; }
+    .card { max-width: 600px; margin: 0 auto; background-color: #1e293b; border-radius: 12px; border: 1px solid #334155; padding: 32px; }
+    .brand { font-size: 20px; font-weight: 700; color: #38bdf8; }
+    .title { font-size: 22px; font-weight: 600; color: #ffffff; margin-top: 8px; }
+    .btn { display: inline-block; background: linear-gradient(135deg, #0284c7, #2563eb); color: #ffffff !important; text-decoration: none; font-weight: 600; font-size: 15px; padding: 12px 24px; border-radius: 8px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand">{{ assistant_name }}</div>
+    <div class="title">Quick Check-in: Keep Your C# Momentum Alive</div>
+    <p style="color: #cbd5e1; font-size: 15px; line-height: 1.6; margin-top: 16px;">
+      Hey! We noticed you haven't completed a training session in the last 2 days.
+      Even 5 minutes of focused practice makes a huge difference in retaining core C# architecture and memory concepts.
+    </p>
+
+    <div style="background-color: #0f172a; border-radius: 8px; padding: 16px; border-left: 4px solid #f59e0b; margin: 20px 0;">
+      <div style="font-weight: 600; color: #ffffff;">Waiting Topic: {{ topic_title }}</div>
+      <div style="color: #94a3b8; font-size: 14px; margin-top: 4px;">A short 5-question review or next quiz set is ready whenever you are.</div>
+    </div>
+
+    <div style="text-align: center;">
+      <a href="{{ app_url }}" class="btn">Resume 5-Minute Session &rarr;</a>
+    </div>
+  </div>
+</body>
+</html>
+

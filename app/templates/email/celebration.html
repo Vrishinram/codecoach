@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ subject }}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #0f172a; margin: 0; padding: 24px; color: #f8fafc; }
+    .card { max-width: 600px; margin: 0 auto; background-color: #1e293b; border-radius: 12px; border: 1px solid #334155; padding: 32px; text-align: center; }
+    .brand { font-size: 20px; font-weight: 700; color: #38bdf8; }
+    .celebration-icon { font-size: 48px; margin: 16px 0 8px 0; }
+    .title { font-size: 24px; font-weight: 700; color: #ffffff; }
+    .highlight-box { background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.1)); border: 1px solid #10b981; border-radius: 8px; padding: 20px; margin: 24px 0; }
+    .btn { display: inline-block; background: linear-gradient(135deg, #059669, #0284c7); color: #ffffff !important; text-decoration: none; font-weight: 600; font-size: 15px; padding: 12px 24px; border-radius: 8px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand">{{ assistant_name }}</div>
+    <div class="celebration-icon">🏆</div>
+    <div class="title">{{ celebration_title }}</div>
+
+    <div class="highlight-box">
+      <div style="font-size: 18px; font-weight: 600; color: #34d399;">{{ celebration_message }}</div>
+      <p style="color: #cbd5e1; font-size: 14px; margin-top: 8px; line-height: 1.5;">
+        {{ celebration_detail }}
+      </p>
+    </div>
+
+    <div>
+      <a href="{{ app_url }}" class="btn">View Updated Roadmap &rarr;</a>
+    </div>
+  </div>
+</body>
+</html>
+

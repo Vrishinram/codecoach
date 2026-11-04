@@ -1,0 +1,323 @@
+[
+  {
+    "topic_id": "variables-and-types",
+    "title": "C# Types and Variables - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/",
+    "type": "article",
+    "level": "beginner",
+    "description": "Comprehensive guide to C# value types, reference types, and built-in types."
+  },
+  {
+    "topic_id": "variables-and-types",
+    "title": "C# 101: Variables and Data Types - .NET Official",
+    "url": "https://www.youtube.com/watch?v=WPvGqVpX91w",
+    "type": "video",
+    "level": "beginner",
+    "description": "Official Microsoft video exploring variables, strings, and integer types in C#."
+  },
+  {
+    "topic_id": "operators-and-expressions",
+    "title": "C# Operators and Expressions - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/",
+    "type": "article",
+    "level": "beginner",
+    "description": "Full reference of arithmetic, logical, null-coalescing, and null-conditional operators."
+  },
+  {
+    "topic_id": "operators-and-expressions",
+    "title": "Pattern Matching and Modern Expressions in C#",
+    "url": "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/functional/pattern-matching",
+    "type": "article",
+    "level": "intermediate",
+    "description": "How to use pattern matching expressions and modern operators."
+  },
+  {
+    "topic_id": "conditions-and-branching",
+    "title": "Branching Statements - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/statements/selection-statements",
+    "type": "article",
+    "level": "beginner",
+    "description": "If-else and switch statements in C#."
+  },
+  {
+    "topic_id": "conditions-and-branching",
+    "title": "Switch Expressions in Modern C#",
+    "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/switch-expression",
+    "type": "article",
+    "level": "intermediate",
+    "description": "Succinct branching with switch expressions and discard patterns."
+  },
+  {
+    "topic_id": "loops-and-iterations",
+    "title": "Iteration Statements - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/statements/iteration-statements",
+    "type": "article",
+    "level": "beginner",
+    "description": "For, foreach, while, and do-while loops in C#."
+  },
+  {
+    "topic_id": "methods-and-parameters",
+    "title": "Methods in C# - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/methods",
+    "type": "article",
+    "level": "beginner",
+    "description": "Signatures, return values, parameters, and expression bodies."
+  },
+  {
+    "topic_id": "methods-and-parameters",
+    "title": "Ref, In, and Out Parameters - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/method-parameters",
+    "type": "article",
+    "level": "intermediate",
+    "description": "Memory management and parameter passing conventions."
+  },
+  {
+    "topic_id": "arrays-and-spans",
+    "title": "Arrays in C# - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/arrays/",
+    "type": "article",
+    "level": "beginner",
+    "description": "Single-dimensional, multidimensional, and jagged arrays."
+  },
+  {
+    "topic_id": "arrays-and-spans",
+    "title": "Strings and String Interpolation - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/strings/",
+    "type": "article",
+    "level": "beginner",
+    "description": "Immutability, StringBuilder, and interpolated raw strings."
+  },
+  {
+    "topic_id": "classes-and-objects",
+    "title": "Classes, Structs, and Records - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/classes",
+    "type": "article",
+    "level": "intermediate",
+    "description": "Object-oriented design with classes and record types in C#."
+  },
+  {
+    "topic_id": "classes-and-objects",
+    "title": "C# Records Explained - Nick Chapsas",
+    "url": "https://www.youtube.com/watch?v=9Byvwa9yF-E",
+    "type": "video",
+    "level": "intermediate",
+    "description": "Deep dive into record types, value equality, and with-expressions."
+  },
+  {
+    "topic_id": "encapsulation-and-access",
+    "title": "Access Modifiers - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/access-modifiers",
+    "type": "article",
+    "level": "intermediate",
+    "description": "Public, private, protected, and internal accessibility levels."
+  },
+  {
+    "topic_id": "inheritance-and-base",
+    "title": "Inheritance in C# - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/inheritance",
+    "type": "article",
+    "level": "intermediate",
+    "description": "Base classes, sealed classes, and constructor chaining."
+  },
+  {
+    "topic_id": "polymorphism-and-overriding",
+    "title": "Polymorphism in C# - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/polymorphism",
+    "type": "article",
+    "level": "intermediate",
+    "description": "Virtual methods, overriding, and runtime dispatch."
+  },
+  {
+    "topic_id": "interfaces-and-contracts",
+    "title": "Interfaces in C# - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/interfaces",
+    "type": "article",
+    "level": "intermediate",
+    "description": "Contract definitions, multiple interfaces, and default implementations."
+  },
+  {
+    "topic_id": "generics-and-constraints",
+    "title": "Generic Classes and Methods - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/generics",
+    "type": "article",
+    "level": "intermediate",
+    "description": "Type parameters, constraints, and compile-time type safety."
+  },
+  {
+    "topic_id": "collections-and-enumerators",
+    "title": "Commonly Used Collection Types - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/dotnet/standard/collections/commonly-used-collection-types",
+    "type": "article",
+    "level": "intermediate",
+    "description": "List, Dictionary, HashSet, and choosing the right collection."
+  },
+  {
+    "topic_id": "linq-query-and-method",
+    "title": "LINQ Tutorial: Data Querying in C# - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/dotnet/csharp/linq/",
+    "type": "article",
+    "level": "intermediate",
+    "description": "Filtering, projecting, aggregating, and joining data in memory."
+  },
+  {
+    "topic_id": "linq-query-and-method",
+    "title": "LINQ in C# Explained - IAmTimCorey",
+    "url": "https://www.youtube.com/watch?v=5rG4nK_v7kU",
+    "type": "video",
+    "level": "intermediate",
+    "description": "Clear step-by-step walkthrough of LINQ operations and common pitfalls."
+  },
+  {
+    "topic_id": "delegates-events-lambdas",
+    "title": "Delegates and Lambdas in C# - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/delegates/",
+    "type": "article",
+    "level": "intermediate",
+    "description": "Func, Action, closures, and decoupled event architectures."
+  },
+  {
+    "topic_id": "exception-handling",
+    "title": "Handling and Throwing Exceptions in .NET - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/dotnet/standard/exceptions/",
+    "type": "article",
+    "level": "intermediate",
+    "description": "Robust error handling patterns and stack trace preservation."
+  },
+  {
+    "topic_id": "async-await-concurrency",
+    "title": "Asynchronous Programming with async and await - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/dotnet/csharp/asynchronous-programming/",
+    "type": "article",
+    "level": "advanced",
+    "description": "Task-based Asynchronous Pattern (TAP), ValueTask, and synchronization contexts."
+  },
+  {
+    "topic_id": "async-await-concurrency",
+    "title": "Async/Await in C# - What You Need to Know",
+    "url": "https://www.youtube.com/watch?v=2moh18sh5p4",
+    "type": "video",
+    "level": "advanced",
+    "description": "Practical async programming, avoiding deadlocks, and Task.WhenAll."
+  },
+  {
+    "topic_id": "file-io-and-streams",
+    "title": "File and Stream I/O - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/dotnet/standard/io/",
+    "type": "article",
+    "level": "intermediate",
+    "description": "Reading, writing, and streaming binary and text data."
+  },
+  {
+    "topic_id": "dependency-injection",
+    "title": "Dependency Injection in ASP.NET Core - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection",
+    "type": "article",
+    "level": "intermediate",
+    "description": "Service lifetimes (Transient, Scoped, Singleton) and container configuration."
+  },
+  {
+    "topic_id": "dependency-injection",
+    "title": "Dependency Injection Deep Dive - Nick Chapsas",
+    "url": "https://www.youtube.com/watch?v=HhybhvE9iU4",
+    "type": "video",
+    "level": "intermediate",
+    "description": "Understanding DI lifetimes and avoiding captive dependencies."
+  },
+  {
+    "topic_id": "middleware-pipeline",
+    "title": "ASP.NET Core Middleware - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/aspnet/core/fundamentals/middleware/",
+    "type": "article",
+    "level": "intermediate",
+    "description": "Custom middleware components and HTTP request pipeline flow."
+  },
+  {
+    "topic_id": "rest-apis-and-minimal-apis",
+    "title": "Minimal APIs Overview - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/overview",
+    "type": "article",
+    "level": "intermediate",
+    "description": "High performance HTTP APIs with minimal ceremony."
+  },
+  {
+    "topic_id": "routing-and-model-binding",
+    "title": "Model Binding in ASP.NET Core - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/aspnet/core/mvc/models/model-binding",
+    "type": "article",
+    "level": "intermediate",
+    "description": "Binding HTTP request data to action method parameters."
+  },
+  {
+    "topic_id": "efcore-basics-and-dbcontext",
+    "title": "Getting Started with EF Core - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/ef/core/get-started/overview/first-app",
+    "type": "article",
+    "level": "intermediate",
+    "description": "Entity Framework Core models, DbContext, and basic CRUD operations."
+  },
+  {
+    "topic_id": "entity-relationships-and-fluent-api",
+    "title": "Relationships in EF Core - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/ef/core/modeling/relationships",
+    "type": "article",
+    "level": "advanced",
+    "description": "Configuring one-to-many, many-to-many, and foreign key cascades."
+  },
+  {
+    "topic_id": "migrations-and-database-updates",
+    "title": "Migrations Overview - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/",
+    "type": "article",
+    "level": "intermediate",
+    "description": "Incremental schema updates and production migration deployment."
+  },
+  {
+    "topic_id": "repository-and-unit-of-work",
+    "title": "Repository Pattern in ASP.NET Core",
+    "url": "https://learn.microsoft.com/en-us/aspnet/mvc/overview/older-versions/getting-started-with-ef-5-using-mvc-4/implementing-the-repository-and-unit-of-work-patterns-in-an-asp-net-mvc-application",
+    "type": "article",
+    "level": "advanced",
+    "description": "Decoupling business logic from data access persistence."
+  },
+  {
+    "topic_id": "jwt-auth-and-security",
+    "title": "Overview of ASP.NET Core Authentication - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/aspnet/core/security/authentication/",
+    "type": "article",
+    "level": "advanced",
+    "description": "Securing web APIs with JWT tokens and claims authorization."
+  },
+  {
+    "topic_id": "unit-testing-with-xunit",
+    "title": "Unit Testing C# in .NET Core using dotnet test and xUnit",
+    "url": "https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test",
+    "type": "article",
+    "level": "intermediate",
+    "description": "Structuring unit tests, test runners, assertions, and test fixtures."
+  },
+  {
+    "topic_id": "solid-principles",
+    "title": "SOLID Principles in C# - Dev Blogs",
+    "url": "https://devblogs.microsoft.com/dotnet/",
+    "type": "article",
+    "level": "advanced",
+    "description": "Applying single responsibility, open-closed, and inversion of control."
+  },
+  {
+    "topic_id": "clean-architecture-and-patterns",
+    "title": "Common Web Application Architectures - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/common-web-application-architectures",
+    "type": "article",
+    "level": "advanced",
+    "description": "Clean architecture, onion architecture, and domain-centric design."
+  },
+  {
+    "topic_id": "docker-and-deployment",
+    "title": "Containerize a .NET App - Microsoft Learn",
+    "url": "https://learn.microsoft.com/en-us/dotnet/core/docker/build-container",
+    "type": "article",
+    "level": "advanced",
+    "description": "Creating optimal multi-stage Docker images for ASP.NET Core."
+  }
+]
+

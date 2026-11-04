@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#0284c7" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="#0f172a"/>
+  <rect x="24" y="24" width="464" height="464" rx="104" fill="url(#grad)" opacity="0.15" stroke="#38bdf8" stroke-width="4"/>
+  <g filter="url(#shadow)">
+    <!-- Stylized C# Hexagon / Terminal Shield -->
+    <path d="M 256 100 L 390 176 L 390 336 L 256 412 L 122 336 L 122 176 Z" fill="#1e293b" stroke="#38bdf8" stroke-width="12" stroke-linejoin="round"/>
+    <!-- Terminal prompt symbol >_ -->
+    <path d="M 195 210 L 245 256 L 195 302" fill="none" stroke="#38bdf8" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="265" y1="302" x2="315" y2="302" stroke="#38bdf8" stroke-width="16" stroke-linecap="round"/>
+  </g>
+</svg>
+

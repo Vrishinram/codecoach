@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeCoach • Real-Time C# & .NET Educator</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0284c7">
+  <link rel="icon" type="image/svg+xml" href="/static/icons/icon.svg">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+
+  <!-- Highlight.js for professional C# syntax highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" id="hljs-theme">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js"></script>
+
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand-wrapper">
+        <img src="/static/icons/icon.svg" alt="CodeCoach Logo" class="brand-logo">
+        <h1 class="brand-title"><span id="assistantBrand">CodeCoach</span></h1>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="nav-tabs" role="tablist">
+        <button class="nav-tab-btn active" data-tab="chat">💬 Chat</button>
+        <button class="nav-tab-btn" data-tab="quiz">🎯 Training Set</button>
+        <button class="nav-tab-btn" data-tab="roadmap">🗺️ Roadmap</button>
+        <button class="nav-tab-btn" data-tab="dashboard">📊 Dashboard</button>
+        <button class="nav-tab-btn" data-tab="settings">⚙️ Settings</button>
+      </nav>
+
+      <!-- Action items -->
+      <div class="header-actions">
+        <div class="streak-pill" id="streakPill" title="Daily training streak">
+          🔥 <span id="streakCount">1</span>d Streak
+        </div>
+        <button class="icon-btn" id="themeToggleBtn" title="Toggle Light/Dark Theme">🌙</button>
+        <button class="icon-btn" id="pushNotifBtn" title="Enable Device Notifications">🔔</button>
+      </div>
+    </header>
+
+    <!-- App Views Content -->
+    <main class="app-content">
+
+      <!-- 1. CHAT VIEW -->
+      <section class="view-section active" id="view-chat">
+        <div class="chat-container">
+          <div class="chat-messages" id="chatMessages">
+            <!-- Messages rendered dynamically -->
+          </div>
+
+          <div class="chat-input-bar">
+            <div class="slash-hints">
+              <span class="slash-pill" onclick="insertSlashCommand('/start ')">/start &lt;topic&gt;</span>
+              <span class="slash-pill" onclick="insertSlashCommand('/next')">/next</span>
+              <span class="slash-pill" onclick="insertSlashCommand('/hint')">/hint</span>
+              <span class="slash-pill" onclick="insertSlashCommand('/skip')">/skip</span>
+              <span class="slash-pill" onclick="insertSlashCommand('/progress')">/progress</span>
+              <span class="slash-pill" onclick="insertSlashCommand('/links')">/links</span>
+              <span class="slash-pill" onclick="insertSlashCommand('/review')">/review</span>
+            </div>
+            <form class="chat-form" id="chatForm">
+              <input type="text" id="chatInput" class="chat-input" placeholder="Ask a C#/.NET question or type a command like /start..." autocomplete="off">
+              <button type="submit" class="btn-primary" id="chatSendBtn">Send</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. QUIZ / TRAINING VIEW -->
+      <section class="view-section" id="view-quiz">
+        <div class="quiz-container">
+          <div id="quizContent">
+            <!-- Rendered by quiz.js -->
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. ROADMAP VIEW -->
+      <section class="view-section" id="view-roadmap">
+        <div style="max-width: 1040px; margin: 0 auto; padding: 32px 20px; width: 100%;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <div>
+              <h2 style="font-size: 22px; font-weight: 700;">C# & .NET Mastery Roadmap</h2>
+              <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Topics unlock as soon as the previous one reaches "Reviewing".</p>
+            </div>
+            <button class="btn-secondary" onclick="openPlacementModal()">Take Placement Test</button>
+          </div>
+
+          <div id="roadmapLevels">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. DASHBOARD VIEW -->
+      <section class="view-section" id="view-dashboard">
+        <div style="max-width: 1040px; margin: 0 auto; padding: 32px 20px; width: 100%;">
+          <h2 style="font-size: 22px; font-weight: 700; margin-bottom: 20px;">Your C# Learning Analytics</h2>
+
+          <!-- Top Stats Cards -->
+          <div class="dashboard-grid">
+            <div class="stat-card">
+              <div class="stat-label">Topics Mastered</div>
+              <div class="stat-value" style="color: var(--status-mastered);" id="statMastered">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">In Reviewing</div>
+              <div class="stat-value" style="color: var(--status-reviewing);" id="statReviewing">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Reviews Due Today</div>
+              <div class="stat-value" style="color: #f59e0b;" id="statReviewsDue">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Total LLM Tokens</div>
+              <div class="stat-value" style="color: var(--accent-cyan);" id="statTokens">0</div>
+            </div>
+          </div>
+
+          <!-- Score History Chart -->
+          <div class="stat-card" style="margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <h3 style="font-size: 16px; font-weight: 700;">Recent Set Scores</h3>
+              <span style="font-size: 12px; color: var(--text-muted);">Pass: 70% • Mastery: 85%</span>
+            </div>
+            <div id="scoreHistoryChart" style="display: flex; align-items: flex-end; gap: 12px; height: 160px; padding-top: 20px; border-bottom: 1px solid var(--border-color);">
+              <!-- Bars injected dynamically -->
+            </div>
+          </div>
+
+          <!-- Due Retention Checks Section -->
+          <div class="stat-card" style="margin-bottom: 24px;">
+            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">🧠 Spaced Repetition (1d, 3d, 7d Retention)</h3>
+            <div id="retentionDueList">
+              <!-- Injected by dashboard.js -->
+            </div>
+          </div>
+
+          <!-- Custom Link Management -->
+          <div class="stat-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <h3 style="font-size: 16px; font-weight: 700;">Curated & Custom Learning Links</h3>
+              <button class="btn-primary" style="font-size: 12.5px; padding: 6px 12px;" onclick="openAddLinkModal()">+ Add Custom Link</button>
+            </div>
+            <div id="linksContainer">
+              <!-- Injected by dashboard.js -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. SETTINGS VIEW -->
+      <section class="view-section" id="view-settings">
+        <div style="max-width: 780px; margin: 0 auto; padding: 32px 20px; width: 100%;">
+          <h2 style="font-size: 22px; font-weight: 700; margin-bottom: 20px;">Notification & Training Preferences</h2>
+
+          <form id="settingsForm" style="display: flex; flex-direction: column; gap: 20px;">
+            <div class="stat-card">
+              <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 14px;">📅 Daily Reminder Schedule</h3>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <label style="font-size: 13.5px; color: var(--text-muted);">Reminder Times (24h, comma-separated)</label>
+                <input type="text" id="settingReminderTimes" class="chat-input" placeholder="08:00,20:00">
+                <span style="font-size: 12px; color: var(--text-dim);">Configured in your timezone: <strong id="settingTimezone">UTC</strong></span>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 14px;">🔔 Notification Channels</h3>
+              <div style="display: flex; flex-direction: column; gap: 12px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                  <input type="checkbox" id="settingPushEnabled" style="width: 18px; height: 18px;">
+                  <span>Web Push (Desktop & Phone PWA)</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                  <input type="checkbox" id="settingEmailEnabled" style="width: 18px; height: 18px;">
+                  <span>HTML Email (to <span id="settingUserEmail">user</span>)</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                  <input type="checkbox" id="settingNtfyEnabled" style="width: 18px; height: 18px;">
+                  <span>ntfy.sh Fallback Phone Channel (<span id="settingNtfyTopic">configured</span>)</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin-top: 6px;">
+                  <input type="checkbox" id="settingPauseReminders" style="width: 18px; height: 18px;">
+                  <span style="color: #f59e0b; font-weight: 600;">Pause all automated reminders</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 14px;">🌙 Quiet Hours</h3>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                  <input type="checkbox" id="settingQuietHoursEnabled" style="width: 18px; height: 18px;">
+                  <span>Do not send reminders during quiet hours</span>
+                </label>
+                <div style="display: flex; gap: 12px; margin-top: 6px;">
+                  <div style="flex: 1;">
+                    <label style="font-size: 12px; color: var(--text-muted);">Start Time</label>
+                    <input type="text" id="settingQuietStart" class="chat-input" placeholder="22:00">
+                  </div>
+                  <div style="flex: 1;">
+                    <label style="font-size: 12px; color: var(--text-muted);">End Time</label>
+                    <input type="text" id="settingQuietEnd" class="chat-input" placeholder="07:00">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+              <button type="submit" class="btn-primary">Save Preferences</button>
+              <button type="button" class="btn-secondary" onclick="sendTestPush()">Send Test Push</button>
+              <button type="button" class="btn-secondary" onclick="sendTestEmail()">Send Test Email</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- MODALS -->
+
+  <!-- Placement Test Modal -->
+  <div class="modal-overlay" id="placementModal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closePlacementModal()">&times;</button>
+      <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 8px;">10-Question Placement Test</h2>
+      <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">
+        Answer these 10 targeted questions to let CodeCoach evaluate your current C# experience and unlock relevant curriculum topics.
+      </p>
+      <div id="placementQuestionsContainer">
+        <!-- Rendered by quiz.js -->
+      </div>
+      <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+        <button class="btn-primary" onclick="submitPlacementTest()">Submit Placement Test</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Teach-Back Modal -->
+  <div class="modal-overlay" id="teachBackModal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeTeachBackModal()">&times;</button>
+      <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 6px;">Step 2: Teach-Back Verification</h2>
+      <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">
+        Explain <strong id="teachBackTopicTitle">this topic</strong> in your own words (3 to 4 sentences).
+        The LLM will grade your accuracy, completeness, and clarity against a strict rubric.
+      </p>
+      <textarea id="teachBackInput" class="code-editor-area" style="min-height: 120px;" placeholder="In C#, this concept works by..."></textarea>
+      
+      <div id="teachBackResult" style="margin-top: 16px; display: none;"></div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button class="btn-secondary" onclick="closeTeachBackModal()">Cancel</button>
+        <button class="btn-primary" id="teachBackSubmitBtn" onclick="submitTeachBack()">Submit Explanation</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Challenge Modal -->
+  <div class="modal-overlay" id="appChallengeModal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeAppChallengeModal()">&times;</button>
+      <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 6px;">Step 3: Practical Application Challenge</h2>
+      <div id="appChallengePromptText" style="font-size: 14.5px; color: var(--text-main); margin-bottom: 14px; padding: 12px; background: var(--bg-app); border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+        Loading coding prompt...
+      </div>
+      <label style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 4px; display: block;">Your C# Solution Code:</label>
+      <textarea id="appChallengeCodeInput" class="code-editor-area" style="min-height: 180px;"></textarea>
+
+      <div id="appChallengeResult" style="margin-top: 16px; display: none;"></div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button class="btn-secondary" onclick="closeAppChallengeModal()">Close</button>
+        <button class="btn-primary" id="appChallengeSubmitBtn" onclick="submitAppChallenge()">Submit for Code Review</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Custom Link Modal -->
+  <div class="modal-overlay" id="addLinkModal">
+    <div class="modal-content" style="max-width: 500px;">
+      <button class="modal-close" onclick="closeAddLinkModal()">&times;</button>
+      <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Add Custom Study Link</h2>
+      <form id="addLinkForm" onsubmit="submitCustomLink(event)" style="display: flex; flex-direction: column; gap: 14px;">
+        <div>
+          <label style="font-size: 12.5px; color: var(--text-muted);">Topic</label>
+          <select id="linkTopicSelect" class="chat-input" style="width: 100%;"></select>
+        </div>
+        <div>
+          <label style="font-size: 12.5px; color: var(--text-muted);">Title</label>
+          <input type="text" id="linkTitleInput" class="chat-input" placeholder="e.g. C# Deep Dive on Threads" required>
+        </div>
+        <div>
+          <label style="font-size: 12.5px; color: var(--text-muted);">URL</label>
+          <input type="url" id="linkUrlInput" class="chat-input" placeholder="https://..." required>
+        </div>
+        <div>
+          <label style="font-size: 12.5px; color: var(--text-muted);">Type</label>
+          <select id="linkTypeSelect" class="chat-input" style="width: 100%;">
+            <option value="article">Article</option>
+            <option value="video">Video</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-primary" style="margin-top: 8px;">Save Link</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Frontend JS Scripts -->
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/chat.js"></script>
+  <script src="/static/js/quiz.js"></script>
+  <script src="/static/js/dashboard.js"></script>
+</body>
+</html>
+
