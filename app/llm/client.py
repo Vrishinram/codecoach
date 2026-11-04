@@ -24,6 +24,7 @@ class LLMClient:
 
     def __init__(self):
         self._client: Optional[AsyncOpenAI] = None
+        self._grok_client: Optional[AsyncOpenAI] = None
 
     def get_client(self) -> AsyncOpenAI:
         from app.config import Settings
@@ -37,15 +38,51 @@ class LLMClient:
             )
         return self._client
 
+    def get_grok_client(self) -> Optional[AsyncOpenAI]:
+        from app.config import Settings
+        cfg = Settings()
+        key = (cfg.XAI_API_KEY or cfg.GROK_API_KEY or "").strip()
+        if not key:
+            return None
+        if self._grok_client is None or getattr(self, "_current_grok_key", None) != key:
+            self._current_grok_key = key
+            self._grok_client = AsyncOpenAI(
+                api_key=key,
+                base_url=cfg.GROK_BASE_URL,
+                http_client=httpx.AsyncClient(timeout=60.0)
+            )
+        return self._grok_client
+
     async def startup_check(self) -> Dict[str, Any]:
         """
         Validates the configured keys and primary model at server startup.
-        Checks Google Gemini if GOOGLE_API_KEY is present, otherwise checks OpenRouter.
+        Priority: xAI Grok -> Google Gemini -> OpenRouter.
         """
         from app.config import Settings
         cfg = Settings()
 
-        # Check Google Gemini first if configured
+        # 1. Check xAI Grok if key configured
+        grok_client = self.get_grok_client()
+        if grok_client:
+            model = cfg.GROK_MODEL or "grok-2-latest"
+            try:
+                response = await grok_client.chat.completions.create(
+                    model=model,
+                    messages=[{"role": "user", "content": "ping"}],
+                    max_tokens=5,
+                    temperature=0.0
+                )
+                logger.info("Startup Check: Successfully verified xAI Grok with model '%s'", model)
+                return {
+                    "status": "ok",
+                    "provider": "xai_grok",
+                    "model": model,
+                    "response": response.choices[0].message.content
+                }
+            except Exception as e:
+                logger.warning("Startup Check for xAI Grok failed: %s. Falling back to Gemini/OpenRouter.", e)
+
+        # 2. Check Google Gemini if configured
         if cfg.GOOGLE_API_KEY:
             try:
                 model = cfg.GEMINI_MODEL or "gemini-3.5-flash"
@@ -64,12 +101,12 @@ class LLMClient:
             except Exception as e:
                 logger.warning("Startup Check for Google Gemini failed: %s. Falling back to OpenRouter check.", e)
 
-        # Check OpenRouter
+        # 3. Check OpenRouter
         if not cfg.OPENROUTER_API_KEY or cfg.OPENROUTER_API_KEY.startswith("dummy"):
             logger.warning("Startup Check: OPENROUTER_API_KEY is not set or using dummy key.")
             return {
                 "status": "warning",
-                "message": "OpenRouter API Key is empty or dummy. Please update your .env file."
+                "message": "No valid LLM key (xAI Grok, Gemini, or OpenRouter) configured. Please update your environment."
             }
 
         client = self.get_client()
@@ -101,7 +138,14 @@ class LLMClient:
     def _get_models_to_try(self) -> List[str]:
         from app.config import Settings
         current_settings = Settings()
-        models = [current_settings.MODEL_NAME]
+        models = []
+        if current_settings.XAI_API_KEY or current_settings.GROK_API_KEY:
+            models.append(current_settings.GROK_MODEL or "grok-2-latest")
+            models.append("grok-2-mini")
+        if current_settings.GOOGLE_API_KEY:
+            models.append(current_settings.GEMINI_MODEL or "gemini-3.5-flash")
+        if current_settings.MODEL_NAME and current_settings.MODEL_NAME not in models:
+            models.append(current_settings.MODEL_NAME)
         for fb in current_settings.fallback_model_list:
             if fb not in models:
                 models.append(fb)
@@ -263,8 +307,52 @@ class LLMClient:
         models = self._get_models_to_try()
         last_error = None
 
-        # If GOOGLE_API_KEY is present and model is gemini, stream directly via Gemini
+        # Check providers in order: Grok -> Gemini -> OpenRouter
         for model in models:
+            is_grok_native = bool((cfg.XAI_API_KEY or cfg.GROK_API_KEY) and (model.startswith("grok") or "grok" in model.lower()))
+            if is_grok_native:
+                grok_client = self.get_grok_client()
+                if grok_client:
+                    temp = temperature if temperature is not None else settings.TEMPERATURE
+                    m_tokens = max_tokens if max_tokens is not None else settings.MAX_TOKENS
+                    full_messages = []
+                    if system_prompt:
+                        full_messages.append({"role": "system", "content": system_prompt})
+                    full_messages.extend(messages)
+                    for attempt in range(2):
+                        try:
+                            logger.debug("Streaming with xAI Grok (%s)", model)
+                            stream = await grok_client.chat.completions.create(
+                                model=model,
+                                messages=full_messages,
+                                temperature=temp,
+                                max_tokens=m_tokens,
+                                stream=True
+                            )
+                            prompt_chars = sum(len(m.get("content", "")) for m in full_messages)
+                            completion_tokens_est = 0
+                            async for chunk in stream:
+                                delta = chunk.choices[0].delta if chunk.choices else None
+                                token_text = (delta.content if (delta and delta.content) else "") or ""
+                                if token_text:
+                                    completion_tokens_est += max(1, len(token_text) // 4)
+                                    yield {"type": "token", "content": token_text, "model": model}
+                            prompt_tokens_est = max(1, prompt_chars // 4)
+                            yield {
+                                "type": "done",
+                                "model": model,
+                                "usage": {
+                                    "prompt_tokens": prompt_tokens_est,
+                                    "completion_tokens": completion_tokens_est,
+                                    "total_tokens": prompt_tokens_est + completion_tokens_est
+                                }
+                            }
+                            return
+                        except Exception as e:
+                            logger.warning("xAI Grok stream %s failed: %s. Trying fallback...", model, e)
+                            last_error = e
+                            break
+
             is_gemini_native = (cfg.GOOGLE_API_KEY and ("gemini" in model.lower() or model.startswith("models/")))
             if is_gemini_native:
                 clean_model = model.replace("models/", "")
@@ -359,6 +447,44 @@ class LLMClient:
         last_error = None
 
         for model in models:
+            is_grok_native = bool((cfg.XAI_API_KEY or cfg.GROK_API_KEY) and (model.startswith("grok") or "grok" in model.lower()))
+            if is_grok_native:
+                grok_client = self.get_grok_client()
+                if grok_client:
+                    temp = temperature if temperature is not None else settings.TEMPERATURE
+                    m_tokens = max_tokens if max_tokens is not None else settings.MAX_TOKENS
+                    full_messages = []
+                    if system_prompt:
+                        full_messages.append({"role": "system", "content": system_prompt})
+                    full_messages.extend(messages)
+                    for attempt in range(2):
+                        try:
+                            logger.debug("Generating completion with xAI Grok (%s)", model)
+                            resp = await grok_client.chat.completions.create(
+                                model=model,
+                                messages=full_messages,
+                                temperature=temp,
+                                max_tokens=m_tokens,
+                                stream=False
+                            )
+                            content = resp.choices[0].message.content or ""
+                            prompt_chars = sum(len(m.get("content", "")) for m in full_messages)
+                            p_tokens = getattr(resp.usage, "prompt_tokens", max(1, prompt_chars // 4)) if getattr(resp, "usage", None) else max(1, prompt_chars // 4)
+                            c_tokens = getattr(resp.usage, "completion_tokens", max(1, len(content) // 4)) if getattr(resp, "usage", None) else max(1, len(content) // 4)
+                            return {
+                                "content": content,
+                                "model": model,
+                                "usage": {
+                                    "prompt_tokens": p_tokens,
+                                    "completion_tokens": c_tokens,
+                                    "total_tokens": p_tokens + c_tokens
+                                }
+                            }
+                        except Exception as e:
+                            logger.warning("xAI Grok completion %s failed: %s. Trying fallback...", model, e)
+                            last_error = e
+                            break
+
             is_gemini_native = (cfg.GOOGLE_API_KEY and ("gemini" in model.lower() or model.startswith("models/")))
             if is_gemini_native:
                 clean_model = model.replace("models/", "")

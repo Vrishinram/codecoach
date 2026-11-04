@@ -369,10 +369,19 @@ async function loadSettingsView() {
     const qEnd = document.getElementById('settingQuietEnd');
     if (qEnd) qEnd.value = s.quiet_hours_end || '07:00';
 
-    // Storage and App URL
+    // Storage, Model, and App URL
     const storageEngineEl = document.getElementById('settingStorageEngine');
     if (storageEngineEl && s.storage_engine) {
       storageEngineEl.textContent = s.storage_engine;
+    }
+    const activeModelEl = document.getElementById('settingActiveModel');
+    if (activeModelEl && s.model_name) {
+      const isGrok = s.grok_configured || s.model_name.includes('grok');
+      activeModelEl.textContent = isGrok ? `⚡ Grok (${s.model_name})` : s.model_name;
+      if (isGrok) {
+        activeModelEl.style.borderColor = 'rgba(245, 197, 24, 0.4)';
+        activeModelEl.style.color = 'var(--accent-yellow)';
+      }
     }
     const appUrlEl = document.getElementById('settingAppUrl');
     if (appUrlEl && s.app_url) {

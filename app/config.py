@@ -19,6 +19,12 @@ class Settings(BaseSettings):
     TEMPERATURE: float = 0.3
     MAX_TOKENS: int = 2048
 
+    # xAI Grok Configuration
+    XAI_API_KEY: str = Field(default="", description="xAI Grok API Key")
+    GROK_API_KEY: str = Field(default="", description="xAI Grok API Key alias")
+    GROK_BASE_URL: str = "https://api.x.ai/v1"
+    GROK_MODEL: str = "grok-2-latest"
+
     # Google Gemini Configuration
     GOOGLE_API_KEY: str = Field(default="", description="Google Gemini API Key")
     GEMINI_MODEL: str = "gemini-3.5-flash"
@@ -95,6 +101,14 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore"
     )
+
+    @property
+    def effective_model_name(self) -> str:
+        if self.XAI_API_KEY or self.GROK_API_KEY:
+            return self.GROK_MODEL or "grok-2-latest"
+        if self.GOOGLE_API_KEY:
+            return self.GEMINI_MODEL or "gemini-3.5-flash"
+        return self.MODEL_NAME
 
     @property
     def fallback_model_list(self) -> List[str]:

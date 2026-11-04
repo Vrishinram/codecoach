@@ -96,3 +96,87 @@ async def test_teach_back_grader_schema_validation(db_session, monkeypatch):
     assert len(res["missing_points"]) == 1
     assert "Excellent" in res["feedback"]
 
+@pytest.mark.asyncio
+async def test_grok_configuration_and_model_priority(monkeypatch):
+    monkeypatch.setenv("XAI_API_KEY", "xai-test-key-12345")
+    from app.config import Settings
+    cfg = Settings()
+    assert cfg.effective_model_name == "grok-2-latest"
+    assert cfg.GROK_BASE_URL == "https://api.x.ai/v1"
+
+    client = LLMClient()
+    models = client._get_models_to_try()
+    assert models[0] == "grok-2-latest"
+    assert "grok-2-mini" in models
+
+    grok_cli = client.get_grok_client()
+    assert grok_cli is not None
+    assert str(grok_cli.base_url).rstrip("/") == "https://api.x.ai/v1"
+
+@pytest.mark.asyncio
+async def test_grok_startup_check_success(monkeypatch):
+    monkeypatch.setenv("XAI_API_KEY", "xai-test-key-12345")
+    client = LLMClient()
+
+    mock_resp = MagicMock()
+    mock_resp.choices = [MagicMock(message=MagicMock(content="grok-pong"))]
+    mock_create = AsyncMock(return_value=mock_resp)
+
+    mock_grok = MagicMock()
+    mock_grok.chat.completions.create = mock_create
+    monkeypatch.setattr(client, "get_grok_client", lambda: mock_grok)
+
+    check = await client.startup_check()
+    assert check["status"] == "ok"
+    assert check["provider"] == "xai_grok"
+    assert check["model"] == "grok-2-latest"
+    assert check["response"] == "grok-pong"
+
+@pytest.mark.asyncio
+async def test_grok_completion_and_streaming(monkeypatch):
+    monkeypatch.setenv("XAI_API_KEY", "xai-test-key-12345")
+    client = LLMClient()
+
+    # 1. Non-streaming completion
+    mock_resp = MagicMock()
+    mock_resp.choices = [MagicMock(message=MagicMock(content="Hello from Grok!"))]
+    mock_resp.usage = MagicMock(prompt_tokens=12, completion_tokens=8, total_tokens=20)
+    mock_create = AsyncMock(return_value=mock_resp)
+
+    mock_grok = MagicMock()
+    mock_grok.chat.completions.create = mock_create
+    monkeypatch.setattr(client, "get_grok_client", lambda: mock_grok)
+
+    res = await client.generate_completion(messages=[{"role": "user", "content": "hello"}])
+    assert res["content"] == "Hello from Grok!"
+    assert res["model"] == "grok-2-latest"
+    assert res["usage"]["total_tokens"] == 20
+
+    # 2. Streaming completion
+    async def mock_stream_iter():
+        chunks = ["Hello", " ", "Gotham", "!"]
+        for c in chunks:
+            delta = MagicMock()
+            delta.content = c
+            choice = MagicMock()
+            choice.delta = delta
+            chunk = MagicMock()
+            chunk.choices = [choice]
+            yield chunk
+
+    mock_stream_create = AsyncMock(return_value=mock_stream_iter())
+    mock_grok.chat.completions.create = mock_stream_create
+
+    tokens = []
+    done_msg = None
+    async for item in client.stream_chat(messages=[{"role": "user", "content": "stream test"}]):
+        if item.get("type") == "token":
+            tokens.append(item.get("content"))
+        elif item.get("type") == "done":
+            done_msg = item
+
+    assert "".join(tokens) == "Hello Gotham!"
+    assert done_msg is not None
+    assert done_msg["model"] == "grok-2-latest"
+
+
