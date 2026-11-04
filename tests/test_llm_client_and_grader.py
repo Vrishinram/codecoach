@@ -179,4 +179,56 @@ async def test_grok_completion_and_streaming(monkeypatch):
     assert done_msg is not None
     assert done_msg["model"] == "grok-2-latest"
 
+@pytest.mark.asyncio
+async def test_groq_configuration_and_model_priority(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "gsk_test_groq_key_12345")
+    from app.config import Settings
+    cfg = Settings()
+    assert cfg.active_groq_key == "gsk_test_groq_key_12345"
+    assert cfg.effective_model_name == "qwen/qwen3.8-27b"
+    assert cfg.GROQ_BASE_URL == "https://api.groq.com/openai/v1"
+
+    client = LLMClient()
+    models = client._get_models_to_try()
+    assert models[0] == "qwen/qwen3.8-27b"
+    assert "openai/gpt-oss-120b" in models
+
+    groq_cli = client.get_groq_client()
+    assert groq_cli is not None
+    assert str(groq_cli.base_url).rstrip("/") == "https://api.groq.com/openai/v1"
+
+@pytest.mark.asyncio
+async def test_groq_startup_check_and_completion(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "gsk_test_groq_key_12345")
+    client = LLMClient()
+
+    # 1. Startup check
+    mock_resp = MagicMock()
+    mock_resp.choices = [MagicMock(message=MagicMock(content="groq-pong"))]
+    mock_create = AsyncMock(return_value=mock_resp)
+
+    mock_groq = MagicMock()
+    mock_groq.chat.completions.create = mock_create
+    monkeypatch.setattr(client, "get_groq_client", lambda: mock_groq)
+
+    check = await client.startup_check()
+    assert check["status"] == "ok"
+    assert check["provider"] == "groq"
+    assert check["model"] == "qwen/qwen3.8-27b"
+
+    # 2. Completion
+    mock_resp_comp = MagicMock()
+    mock_msg = MagicMock()
+    mock_msg.content = "Fast C# output from Groq"
+    mock_msg.reasoning = None
+    mock_resp_comp.choices = [MagicMock(message=mock_msg)]
+    mock_resp_comp.usage = MagicMock(prompt_tokens=10, completion_tokens=8, total_tokens=18)
+    mock_groq.chat.completions.create = AsyncMock(return_value=mock_resp_comp)
+
+    res = await client.generate_completion(messages=[{"role": "user", "content": "hello"}])
+    assert res["content"] == "Fast C# output from Groq"
+    assert res["model"] == "qwen/qwen3.8-27b"
+    assert res["usage"]["total_tokens"] == 18
+
+
 

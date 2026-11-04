@@ -25,6 +25,7 @@ class LLMClient:
     def __init__(self):
         self._client: Optional[AsyncOpenAI] = None
         self._grok_client: Optional[AsyncOpenAI] = None
+        self._groq_client: Optional[AsyncOpenAI] = None
 
     def get_client(self) -> AsyncOpenAI:
         from app.config import Settings
@@ -38,10 +39,25 @@ class LLMClient:
             )
         return self._client
 
+    def get_groq_client(self) -> Optional[AsyncOpenAI]:
+        from app.config import Settings
+        cfg = Settings()
+        key = cfg.active_groq_key
+        if not key:
+            return None
+        if self._groq_client is None or getattr(self, "_current_groq_key", None) != key:
+            self._current_groq_key = key
+            self._groq_client = AsyncOpenAI(
+                api_key=key,
+                base_url=cfg.GROQ_BASE_URL,
+                http_client=httpx.AsyncClient(timeout=60.0)
+            )
+        return self._groq_client
+
     def get_grok_client(self) -> Optional[AsyncOpenAI]:
         from app.config import Settings
         cfg = Settings()
-        key = (cfg.XAI_API_KEY or cfg.GROK_API_KEY or "").strip()
+        key = cfg.active_grok_key
         if not key:
             return None
         if self._grok_client is None or getattr(self, "_current_grok_key", None) != key:
@@ -56,12 +72,33 @@ class LLMClient:
     async def startup_check(self) -> Dict[str, Any]:
         """
         Validates the configured keys and primary model at server startup.
-        Priority: xAI Grok -> Google Gemini -> OpenRouter.
+        Priority: Groq Cloud -> xAI Grok -> Google Gemini -> OpenRouter.
         """
         from app.config import Settings
         cfg = Settings()
 
-        # 1. Check xAI Grok if key configured
+        # 1. Check Groq Cloud if key configured
+        groq_client = self.get_groq_client()
+        if groq_client:
+            model = cfg.GROQ_MODEL or "qwen/qwen3.8-27b"
+            try:
+                response = await groq_client.chat.completions.create(
+                    model=model,
+                    messages=[{"role": "user", "content": "ping"}],
+                    max_tokens=5,
+                    temperature=0.0
+                )
+                logger.info("Startup Check: Successfully verified Groq Cloud with model '%s'", model)
+                return {
+                    "status": "ok",
+                    "provider": "groq",
+                    "model": model,
+                    "response": response.choices[0].message.content
+                }
+            except Exception as e:
+                logger.warning("Startup Check for Groq Cloud failed: %s. Falling back to Grok/Gemini/OpenRouter.", e)
+
+        # 2. Check xAI Grok if key configured
         grok_client = self.get_grok_client()
         if grok_client:
             model = cfg.GROK_MODEL or "grok-2-latest"
@@ -139,7 +176,12 @@ class LLMClient:
         from app.config import Settings
         current_settings = Settings()
         models = []
-        if current_settings.XAI_API_KEY or current_settings.GROK_API_KEY:
+        if current_settings.active_groq_key:
+            models.append(current_settings.GROQ_MODEL or "qwen/qwen3.8-27b")
+            for gm in ["openai/gpt-oss-120b", "openai/gpt-oss-20b"]:
+                if gm not in models:
+                    models.append(gm)
+        if current_settings.active_grok_key:
             models.append(current_settings.GROK_MODEL or "grok-2-latest")
             models.append("grok-2-mini")
         if current_settings.GOOGLE_API_KEY:
@@ -307,9 +349,55 @@ class LLMClient:
         models = self._get_models_to_try()
         last_error = None
 
-        # Check providers in order: Grok -> Gemini -> OpenRouter
+        # Check providers in order: Groq Cloud -> xAI Grok -> Gemini -> OpenRouter
         for model in models:
-            is_grok_native = bool((cfg.XAI_API_KEY or cfg.GROK_API_KEY) and (model.startswith("grok") or "grok" in model.lower()))
+            is_groq_native = bool(cfg.active_groq_key and (model.startswith("qwen") or model.startswith("openai/gpt-oss") or model == cfg.GROQ_MODEL or "groq" in model.lower()))
+            if is_groq_native:
+                groq_client = self.get_groq_client()
+                if groq_client:
+                    temp = temperature if temperature is not None else settings.TEMPERATURE
+                    m_tokens = max_tokens if max_tokens is not None else settings.MAX_TOKENS
+                    full_messages = []
+                    if system_prompt:
+                        full_messages.append({"role": "system", "content": system_prompt})
+                    full_messages.extend(messages)
+                    for attempt in range(2):
+                        try:
+                            logger.debug("Streaming with Groq Cloud (%s)", model)
+                            stream = await groq_client.chat.completions.create(
+                                model=model,
+                                messages=full_messages,
+                                temperature=temp,
+                                max_tokens=m_tokens,
+                                stream=True
+                            )
+                            prompt_chars = sum(len(m.get("content", "")) for m in full_messages)
+                            completion_tokens_est = 0
+                            async for chunk in stream:
+                                delta = chunk.choices[0].delta if chunk.choices else None
+                                token_text = (getattr(delta, "content", None) or "")
+                                if not token_text and getattr(delta, "reasoning", None):
+                                    token_text = getattr(delta, "reasoning") or ""
+                                if token_text:
+                                    completion_tokens_est += max(1, len(token_text) // 4)
+                                    yield {"type": "token", "content": token_text, "model": model}
+                            prompt_tokens_est = max(1, prompt_chars // 4)
+                            yield {
+                                "type": "done",
+                                "model": model,
+                                "usage": {
+                                    "prompt_tokens": prompt_tokens_est,
+                                    "completion_tokens": completion_tokens_est,
+                                    "total_tokens": prompt_tokens_est + completion_tokens_est
+                                }
+                            }
+                            return
+                        except Exception as e:
+                            logger.warning("Groq Cloud stream %s failed: %s. Trying fallback...", model, e)
+                            last_error = e
+                            break
+
+            is_grok_native = bool(cfg.active_grok_key and (model.startswith("grok") or "grok" in model.lower()))
             if is_grok_native:
                 grok_client = self.get_grok_client()
                 if grok_client:
@@ -447,7 +535,46 @@ class LLMClient:
         last_error = None
 
         for model in models:
-            is_grok_native = bool((cfg.XAI_API_KEY or cfg.GROK_API_KEY) and (model.startswith("grok") or "grok" in model.lower()))
+            is_groq_native = bool(cfg.active_groq_key and (model.startswith("qwen") or model.startswith("openai/gpt-oss") or model == cfg.GROQ_MODEL or "groq" in model.lower()))
+            if is_groq_native:
+                groq_client = self.get_groq_client()
+                if groq_client:
+                    temp = temperature if temperature is not None else settings.TEMPERATURE
+                    m_tokens = max_tokens if max_tokens is not None else settings.MAX_TOKENS
+                    full_messages = []
+                    if system_prompt:
+                        full_messages.append({"role": "system", "content": system_prompt})
+                    full_messages.extend(messages)
+                    for attempt in range(2):
+                        try:
+                            logger.debug("Generating completion with Groq Cloud (%s)", model)
+                            resp = await groq_client.chat.completions.create(
+                                model=model,
+                                messages=full_messages,
+                                temperature=temp,
+                                max_tokens=m_tokens,
+                                stream=False
+                            )
+                            msg = resp.choices[0].message
+                            content = getattr(msg, "content", None) or getattr(msg, "reasoning", None) or ""
+                            prompt_chars = sum(len(m.get("content", "")) for m in full_messages)
+                            p_tokens = getattr(resp.usage, "prompt_tokens", max(1, prompt_chars // 4)) if getattr(resp, "usage", None) else max(1, prompt_chars // 4)
+                            c_tokens = getattr(resp.usage, "completion_tokens", max(1, len(content) // 4)) if getattr(resp, "usage", None) else max(1, len(content) // 4)
+                            return {
+                                "content": content,
+                                "model": model,
+                                "usage": {
+                                    "prompt_tokens": p_tokens,
+                                    "completion_tokens": c_tokens,
+                                    "total_tokens": p_tokens + c_tokens
+                                }
+                            }
+                        except Exception as e:
+                            logger.warning("Groq Cloud completion %s failed: %s. Trying fallback...", model, e)
+                            last_error = e
+                            break
+
+            is_grok_native = bool(cfg.active_grok_key and (model.startswith("grok") or "grok" in model.lower()))
             if is_grok_native:
                 grok_client = self.get_grok_client()
                 if grok_client:

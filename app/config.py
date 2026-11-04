@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     TEMPERATURE: float = 0.3
     MAX_TOKENS: int = 2048
 
+    # Groq Cloud Configuration
+    GROQ_API_KEY: str = Field(default="", description="Groq Cloud API Key (gsk_...)")
+    GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
+    GROQ_MODEL: str = "qwen/qwen3.8-27b"
+
     # xAI Grok Configuration
     XAI_API_KEY: str = Field(default="", description="xAI Grok API Key")
     GROK_API_KEY: str = Field(default="", description="xAI Grok API Key alias")
@@ -103,8 +108,33 @@ class Settings(BaseSettings):
     )
 
     @property
+    def active_groq_key(self) -> str:
+        """
+        Returns a valid Groq API key (starts with gsk_ or explicit GROQ_API_KEY).
+        Auto-resolves keys passed in GROK_API_KEY or XAI_API_KEY if prefixed with gsk_.
+        """
+        for k in [self.GROQ_API_KEY, self.GROK_API_KEY, self.XAI_API_KEY]:
+            val = (k or "").strip()
+            if val.startswith("gsk_"):
+                return val
+        return (self.GROQ_API_KEY or "").strip()
+
+    @property
+    def active_grok_key(self) -> str:
+        """
+        Returns a valid xAI Grok API key (non-gsk_ key in XAI_API_KEY or GROK_API_KEY).
+        """
+        for k in [self.XAI_API_KEY, self.GROK_API_KEY]:
+            val = (k or "").strip()
+            if val and not val.startswith("gsk_"):
+                return val
+        return ""
+
+    @property
     def effective_model_name(self) -> str:
-        if self.XAI_API_KEY or self.GROK_API_KEY:
+        if self.active_groq_key:
+            return self.GROQ_MODEL or "qwen/qwen3.8-27b"
+        if self.active_grok_key:
             return self.GROK_MODEL or "grok-2-latest"
         if self.GOOGLE_API_KEY:
             return self.GEMINI_MODEL or "gemini-3.5-flash"

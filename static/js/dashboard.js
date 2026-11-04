@@ -376,11 +376,18 @@ async function loadSettingsView() {
     }
     const activeModelEl = document.getElementById('settingActiveModel');
     if (activeModelEl && s.model_name) {
+      const isGroq = s.groq_configured || s.model_name.includes('qwen') || s.model_name.includes('gpt-oss');
       const isGrok = s.grok_configured || s.model_name.includes('grok');
-      activeModelEl.textContent = isGrok ? `⚡ Grok (${s.model_name})` : s.model_name;
-      if (isGrok) {
-        activeModelEl.style.borderColor = 'rgba(245, 197, 24, 0.4)';
+      if (isGroq) {
+        activeModelEl.textContent = `⚡ Groq (${s.model_name})`;
+        activeModelEl.style.borderColor = 'rgba(245, 197, 24, 0.5)';
         activeModelEl.style.color = 'var(--accent-yellow)';
+      } else if (isGrok) {
+        activeModelEl.textContent = `🦇 xAI Grok (${s.model_name})`;
+        activeModelEl.style.borderColor = 'rgba(245, 197, 24, 0.5)';
+        activeModelEl.style.color = 'var(--accent-yellow)';
+      } else {
+        activeModelEl.textContent = s.model_name;
       }
     }
     const appUrlEl = document.getElementById('settingAppUrl');

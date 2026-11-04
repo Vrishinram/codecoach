@@ -38,7 +38,8 @@ async def get_user_settings(db: Session = Depends(get_db)):
         "pass_score": settings.PASS_SCORE,
         "mastery_score": settings.MASTERY_SCORE,
         "model_name": settings.effective_model_name,
-        "grok_configured": bool(settings.XAI_API_KEY or settings.GROK_API_KEY),
+        "groq_configured": bool(settings.active_groq_key),
+        "grok_configured": bool(settings.active_grok_key),
         "fallback_models": settings.fallback_model_list,
         # Editable preferences
         "push_enabled": profile.push_enabled,
