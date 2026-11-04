@@ -130,16 +130,16 @@ function renderMessageBubble(sender, content) {
   const row = document.createElement('div');
   row.className = `message-row ${sender}`;
 
-  const avatar = document.createElement('div');
-  avatar.className = `avatar-badge avatar-${sender}`;
-  avatar.textContent = sender === 'assistant' ? 'CC' : 'ME';
+  const speakerTag = document.createElement('div');
+  speakerTag.className = `repl-speaker-tag speaker-${sender}`;
+  speakerTag.textContent = sender === 'assistant' ? '[SYS::CodeCoach]' : '[USR::You]';
 
   const bubble = document.createElement('div');
   bubble.className = 'message-bubble';
   bubble.innerHTML = formatMarkdown(content);
   highlightCodeBlocks(bubble);
 
-  row.appendChild(avatar);
+  row.appendChild(speakerTag);
   row.appendChild(bubble);
   container.appendChild(row);
   container.scrollTop = container.scrollHeight;
@@ -149,9 +149,9 @@ function createStreamingBubble() {
   const row = document.createElement('div');
   row.className = 'message-row assistant';
 
-  const avatar = document.createElement('div');
-  avatar.className = 'avatar-badge avatar-assistant';
-  avatar.textContent = 'CC';
+  const speakerTag = document.createElement('div');
+  speakerTag.className = 'repl-speaker-tag speaker-assistant';
+  speakerTag.textContent = '[SYS::CodeCoach]';
 
   const bubble = document.createElement('div');
   bubble.className = 'message-bubble';
@@ -160,7 +160,7 @@ function createStreamingBubble() {
   textSpan.className = 'stream-text';
   bubble.appendChild(textSpan);
 
-  row.appendChild(avatar);
+  row.appendChild(speakerTag);
   row.appendChild(bubble);
   return row;
 }

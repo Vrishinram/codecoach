@@ -87,8 +87,8 @@ function renderQuestion(q, totalQuestions = 25) {
     inputHtml = `<div class="options-grid">
       ${q.options.map(opt => `
         <button class="option-btn" onclick="submitAnswer('${opt.charAt(0)}')">
-          <span style="font-weight: 700; color: var(--accent-cyan);">${opt.slice(0, 2)}</span>
-          <span>${opt.slice(2)}</span>
+          <span class="option-key-badge">${opt.charAt(0)}</span>
+          <span>${opt.slice(2).trim() || opt}</span>
         </button>
       `).join('')}
     </div>`;
@@ -120,13 +120,15 @@ function renderQuestion(q, totalQuestions = 25) {
       <div class="quiz-prompt">${q.prompt}</div>
 
       ${q.code_snippet ? `
-        <pre class="code-snippet-box"><code class="language-csharp">${q.code_snippet}</code></pre>
+        <div class="quiz-code-box">
+          <pre><code class="language-csharp">${q.code_snippet}</code></pre>
+        </div>
       ` : ''}
 
       ${inputHtml}
 
       <div id="feedbackContainer" style="display: none;"></div>
-      <div id="hintContainer" style="display: none; padding: 12px; background: rgba(245,158,11,0.1); border-left: 3px solid #f59e0b; border-radius: 4px; font-size: 13.5px; margin-bottom: 18px; color: #f59e0b;"></div>
+      <div id="hintContainer" style="display: none; padding: 12px; background: rgba(245,158,11,0.08); border-left: 3px solid #f59e0b; border-radius: 4px; font-size: 13.5px; margin-bottom: 18px; color: #f59e0b; font-family: var(--font-mono);"></div>
 
       <div class="quiz-footer">
         <button class="btn-secondary" onclick="showHint()">💡 Hint</button>
@@ -173,16 +175,18 @@ function displayAnswerFeedback(result) {
   fb.className = `feedback-box ${result.is_correct ? 'correct' : 'wrong'}`;
   fb.style.display = 'block';
 
-  // Disable options / inputs
+  // Highlight options
   document.querySelectorAll('.option-btn').forEach(btn => {
     btn.disabled = true;
-    if (btn.textContent.trim().startsWith(result.correct_answer)) {
-      btn.classList.add('correct');
+    const badge = btn.querySelector('.option-key-badge');
+    const key = badge ? badge.textContent.trim() : btn.textContent.trim().charAt(0);
+    if (key === result.correct_answer) {
+      btn.classList.add('selected-correct');
     }
   });
 
   fb.innerHTML = `
-    <div class="feedback-title">${result.is_correct ? '✅ Correct!' : '❌ Incorrect'}</div>
+    <div class="feedback-title">${result.is_correct ? '✅ Benchmark Verified: Correct' : '❌ Incorrect Selection'}</div>
     <div class="feedback-explanation">
       <strong>Expected:</strong> <code>${result.correct_answer}</code><br>
       ${result.explanation}

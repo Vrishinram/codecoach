@@ -1,5 +1,6 @@
 /**
- * Core Application Controller for CodeCoach PWA
+ * Core Application Controller for CodeCoach
+ * Master-Detail Rail, Theme, Tab Switching, & Telemetry
  */
 
 // Global State
@@ -7,24 +8,23 @@ window.CodeCoach = {
   theme: localStorage.getItem('cc_theme') || 'dark',
   activeTab: 'chat',
   userSettings: null,
-  activeTopicId: null,
+  activeTopicId: 'variables-and-types',
   activeSetId: null,
   currentQuestion: null
 };
 
-// Initialize PWA and DOM Events
+// Initialize App
 document.addEventListener('DOMContentLoaded', async () => {
   initTheme();
   initTabs();
+  initRailToggle();
   initServiceWorker();
   initNotificationButton();
   handleHashNavigation();
 
-  // Load initial settings
+  // Load global config & populate curriculum rail
   await loadGlobalSettings();
-
-  // Check if placement test completed
-  checkPlacementFirstLaunch();
+  await loadCurriculumRail();
 });
 
 // Theme Management
@@ -32,46 +32,69 @@ function initTheme() {
   const html = document.documentElement;
   html.setAttribute('data-theme', window.CodeCoach.theme);
   const btn = document.getElementById('themeToggleBtn');
-  btn.textContent = window.CodeCoach.theme === 'dark' ? '☀️' : '🌙';
+  if (btn) btn.textContent = window.CodeCoach.theme === 'dark' ? '☀️' : '🌙';
 
-  btn.addEventListener('click', () => {
-    const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    html.setAttribute('data-theme', next);
-    window.CodeCoach.theme = next;
-    localStorage.setItem('cc_theme', next);
-    btn.textContent = next === 'dark' ? '☀️' : '🌙';
+  if (btn) {
+    btn.addEventListener('click', () => {
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      window.CodeCoach.theme = next;
+      localStorage.setItem('cc_theme', next);
+      btn.textContent = next === 'dark' ? '☀️' : '🌙';
 
-    // Switch highlight.js theme
-    const hljsTheme = document.getElementById('hljs-theme');
-    if (hljsTheme) {
-      hljsTheme.href = next === 'dark'
-        ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css'
-        : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
-    }
-  });
+      const hljsTheme = document.getElementById('hljs-theme');
+      if (hljsTheme) {
+        hljsTheme.href = next === 'dark'
+          ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css'
+          : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
+      }
+    });
+  }
 }
 
-// Navigation Tabs
+// Navigation Tabs & Mobile Bottom Bar Sync
 function initTabs() {
-  const tabs = document.querySelectorAll('.nav-tab-btn');
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      const target = tab.dataset.tab;
-      switchTab(target);
+  const desktopTabs = document.querySelectorAll('.nav-tab-btn');
+  const mobileTabs = document.querySelectorAll('.bottom-nav-btn');
+
+  const bindTabs = (elements) => {
+    elements.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const target = tab.dataset.tab;
+        switchTab(target);
+      });
     });
-  });
+  };
+
+  bindTabs(desktopTabs);
+  bindTabs(mobileTabs);
 
   window.addEventListener('hashchange', handleHashNavigation);
 }
 
 function switchTab(tabName) {
   window.CodeCoach.activeTab = tabName;
+
+  // Sync Desktop Nav
   document.querySelectorAll('.nav-tab-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.tab === tabName);
   });
+
+  // Sync Mobile Bottom Nav
+  document.querySelectorAll('.bottom-nav-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tabName);
+  });
+
+  // Toggle View Sections
   document.querySelectorAll('.view-section').forEach(s => {
     s.classList.toggle('active', s.id === `view-${tabName}`);
   });
+
+  // Auto-close rail on mobile when navigating
+  const rail = document.getElementById('curriculumRail');
+  if (rail && rail.classList.contains('open')) {
+    rail.classList.remove('open');
+  }
 
   if (tabName === 'dashboard') {
     loadDashboardStats();
@@ -82,14 +105,73 @@ function switchTab(tabName) {
   }
 }
 
+function initRailToggle() {
+  const btn = document.getElementById('railToggleBtn');
+  const rail = document.getElementById('curriculumRail');
+  if (btn && rail) {
+    btn.addEventListener('click', () => {
+      rail.classList.toggle('open');
+    });
+  }
+}
+
+// Populate Left Curriculum Rail Tree (Master-Detail)
+async function loadCurriculumRail() {
+  const container = document.getElementById('railTopicList');
+  if (!container) return;
+
+  try {
+    const res = await fetch('/api/curriculum');
+    const levels = await res.json();
+
+    container.innerHTML = levels.map((lvl, lIdx) => `
+      <div class="rail-level-group">
+        <div class="rail-level-title">
+          <span>L${lIdx + 1} // ${lvl.title}</span>
+        </div>
+        <div>
+          ${lvl.topics.map(t => {
+            const statusClass = `status-${t.status.toLowerCase()}`;
+            const isActive = t.id === window.CodeCoach.activeTopicId;
+            return `
+              <div class="rail-topic-item ${isActive ? 'active' : ''}" onclick="selectRailTopic('${t.id}')">
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${t.title}</span>
+                <span class="rail-topic-status-pill ${statusClass}">${t.status}</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    container.innerHTML = `<div class="rail-loading-state" style="color: var(--status-error);">Could not load curriculum rail.</div>`;
+  }
+}
+
+function selectRailTopic(topicId) {
+  window.CodeCoach.activeTopicId = topicId;
+  document.querySelectorAll('.rail-topic-item').forEach(item => {
+    item.classList.remove('active');
+  });
+
+  // Switch to quiz and start drill
+  switchTab('quiz');
+  if (window.CodeCoach.startTopicTraining) {
+    window.CodeCoach.startTopicTraining(topicId);
+  }
+}
+
 function handleHashNavigation() {
   const hash = window.location.hash;
   if (!hash) return;
 
   if (hash.startsWith('#quiz/')) {
     const topicId = hash.replace('#quiz/', '');
+    window.CodeCoach.activeTopicId = topicId;
     switchTab('quiz');
-    startTopicTraining(topicId);
+    if (window.CodeCoach.startTopicTraining) {
+      window.CodeCoach.startTopicTraining(topicId);
+    }
   } else if (hash.startsWith('#teach-back/')) {
     const topicId = hash.replace('#teach-back/', '');
     openTeachBackModal(topicId);
@@ -107,24 +189,25 @@ function handleHashNavigation() {
 async function initServiceWorker() {
   if ('serviceWorker' in navigator) {
     try {
-      const reg = await navigator.serviceWorker.register('/sw.js');
-      console.log('CodeCoach Service Worker registered:', reg.scope);
+      await navigator.serviceWorker.register('/sw.js');
     } catch (e) {
-      console.error('Service Worker registration failed:', e);
+      console.warn('Service Worker registration skipped:', e);
     }
   }
 }
 
 function initNotificationButton() {
   const btn = document.getElementById('pushNotifBtn');
-  if (!('Notification' in window)) {
+  if (!('Notification' in window) && btn) {
     btn.style.display = 'none';
     return;
   }
 
-  btn.addEventListener('click', async () => {
-    await requestAndSubscribePush();
-  });
+  if (btn) {
+    btn.addEventListener('click', async () => {
+      await requestAndSubscribePush();
+    });
+  }
 }
 
 function urlBase64ToUint8Array(base64String) {
@@ -142,14 +225,14 @@ async function requestAndSubscribePush() {
   try {
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
-      alert('Notification permission denied. Please allow notifications in your browser settings.');
+      showToast('Notification permission denied. Please allow notifications in browser settings.', 'error');
       return;
     }
 
     const keyResp = await fetch('/api/push/public-key');
     const { publicKey } = await keyResp.json();
     if (!publicKey) {
-      alert('VAPID public key not configured in .env.');
+      showToast('VAPID public key not configured.', 'error');
       return;
     }
 
@@ -173,10 +256,10 @@ async function requestAndSubscribePush() {
       })
     });
 
-    alert('Device notifications successfully activated! You will receive scheduled C# reminders.');
+    showToast('Device notifications activated! Scheduled C# training reminders enabled.');
   } catch (err) {
     console.error('Error subscribing to push:', err);
-    alert('Failed to register push subscription: ' + err.message);
+    showToast('Failed to register push: ' + err.message, 'error');
   }
 }
 
@@ -187,39 +270,32 @@ async function loadGlobalSettings() {
     const data = await res.json();
     window.CodeCoach.userSettings = data;
 
-    // Update Brand Name in Header
     if (data.assistant_name) {
-      document.getElementById('assistantBrand').textContent = data.assistant_name;
-      document.title = `${data.assistant_name} • Real-Time C# & .NET Educator`;
+      const brandElem = document.getElementById('assistantBrand');
+      if (brandElem) brandElem.textContent = data.assistant_name;
+      document.title = `${data.assistant_name} • Active-Recall C# & .NET 9 Training Engine`;
     }
   } catch (e) {
     console.warn('Could not load settings:', e);
   }
 }
 
-function checkPlacementFirstLaunch() {
-  const placementDone = localStorage.getItem('cc_placement_done');
-  if (!placementDone) {
-    // Show prompt or option to take placement test
-    console.log('First launch detected - placement test available.');
-  }
-}
-
-// Toast Alert
+// Inline System Toast Notification
 function showToast(message, type = 'info') {
   const div = document.createElement('div');
   div.style.position = 'fixed';
-  div.style.bottom = '24px';
-  div.style.right = '24px';
-  div.style.background = type === 'error' ? '#ef4444' : '#0284c7';
+  div.style.bottom = '64px';
+  div.style.right = '20px';
+  div.style.background = type === 'error' ? 'var(--status-error)' : 'var(--accent-cyan-active)';
   div.style.color = '#ffffff';
-  div.style.padding = '12px 20px';
-  div.style.borderRadius = '8px';
-  div.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+  div.style.padding = '10px 18px';
+  div.style.borderRadius = 'var(--radius-sm)';
+  div.style.boxShadow = 'var(--elevation-2)';
   div.style.zIndex = '9999';
   div.style.fontWeight = '600';
+  div.style.fontSize = '13.5px';
+  div.style.fontFamily = 'var(--font-ui)';
   div.textContent = message;
   document.body.appendChild(div);
   setTimeout(() => div.remove(), 4000);
 }
-

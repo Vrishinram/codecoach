@@ -3,315 +3,421 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CodeCoach • Real-Time C# & .NET Educator</title>
+  <title>CodeCoach • Active-Recall C# & .NET 9 Training Engine</title>
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#0284c7">
+  <meta name="theme-color" content="#080c14">
   <link rel="icon" type="image/svg+xml" href="/static/icons/icon.svg">
   <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
 
-  <!-- Highlight.js for professional C# syntax highlighting -->
+  <!-- Engineered Google Fonts: Space Grotesk (Headings), Plus Jakarta Sans (UI/Body), JetBrains Mono (Code/Telemetry) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Highlight.js for C# syntax highlighting -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" id="hljs-theme">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js"></script>
 
-  <!-- Marked.js for robust GitHub-flavored Markdown rendering -->
+  <!-- Marked.js for GitHub-flavored Markdown rendering -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
 
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
   <div class="app-container">
-    <!-- Header -->
+
+    <!-- Top Unified App Bar -->
     <header class="app-header">
       <div class="brand-wrapper">
+        <button class="rail-toggle-btn" id="railToggleBtn" title="Toggle Curriculum Rail" aria-label="Toggle Curriculum Rail">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+        </button>
         <img src="/static/icons/icon.svg" alt="CodeCoach Logo" class="brand-logo">
-        <h1 class="brand-title"><span id="assistantBrand">CodeCoach</span></h1>
+        <div class="brand-text-block">
+          <h1 class="brand-title"><span id="assistantBrand">CodeCoach</span></h1>
+          <span class="brand-tag">C# .NET 9</span>
+        </div>
       </div>
 
-      <!-- Navigation Tabs -->
-      <nav class="nav-tabs" role="tablist">
-        <button class="nav-tab-btn active" data-tab="chat">💬 Chat</button>
-        <button class="nav-tab-btn" data-tab="quiz">🎯 Training Set</button>
-        <button class="nav-tab-btn" data-tab="roadmap">🗺️ Roadmap</button>
-        <button class="nav-tab-btn" data-tab="dashboard">📊 Dashboard</button>
-        <button class="nav-tab-btn" data-tab="settings">⚙️ Settings</button>
+      <!-- Top Primary Tab Strip (Desktop & Tablet) -->
+      <nav class="nav-tabs desktop-nav" role="tablist">
+        <button class="nav-tab-btn active" data-tab="chat">💬 REPL Console</button>
+        <button class="nav-tab-btn" data-tab="quiz">🎯 Active Drill</button>
+        <button class="nav-tab-btn" data-tab="roadmap">🗺️ Curriculum</button>
+        <button class="nav-tab-btn" data-tab="dashboard">📊 Telemetry</button>
+        <button class="nav-tab-btn" data-tab="settings">⚙️ Preferences</button>
       </nav>
 
-      <!-- Action items -->
+      <!-- Action Items -->
       <div class="header-actions">
-        <div class="streak-pill" id="streakPill" title="Daily training streak">
-          🔥 <span id="streakCount">1</span>d Streak
+        <div class="streak-pill" id="streakPill" title="Daily consecutive training streak">
+          🔥 <span id="streakCount">0</span>d Streak
         </div>
-        <button class="icon-btn" id="themeToggleBtn" title="Toggle Light/Dark Theme">🌙</button>
-        <button class="icon-btn" id="pushNotifBtn" title="Enable Device Notifications">🔔</button>
+        <button class="icon-btn" id="themeToggleBtn" title="Toggle Light/Dark Theme" aria-label="Toggle Theme">🌙</button>
+        <button class="icon-btn" id="pushNotifBtn" title="Enable 8 AM / 8 PM Training Alerts" aria-label="Enable Push Alerts">🔔</button>
       </div>
     </header>
 
-    <!-- App Views Content -->
-    <main class="app-content">
+    <!-- Master-Detail Split Workspace (Composition A) -->
+    <div class="workspace-split">
 
-      <!-- 1. CHAT VIEW -->
-      <section class="view-section active" id="view-chat">
-        <div class="chat-container">
-          <div class="chat-messages" id="chatMessages">
-            <!-- Messages rendered dynamically -->
+      <!-- Left Persistent Curriculum Rail -->
+      <aside class="curriculum-rail" id="curriculumRail">
+        <div class="rail-header">
+          <div class="rail-header-title">
+            <span class="mono-step">[ 01 // ROADMAP ]</span>
+            <h3>Curriculum Tree</h3>
           </div>
+          <button class="rail-calibrate-btn" onclick="openPlacementModal()" title="Calibrate starting level with 10 questions">
+            Calibrate (10 Qs)
+          </button>
+        </div>
 
-          <div class="chat-input-bar">
-            <div class="slash-hints">
-              <span class="slash-pill" onclick="insertSlashCommand('/start ')">/start &lt;topic&gt;</span>
-              <span class="slash-pill" onclick="insertSlashCommand('/next')">/next</span>
-              <span class="slash-pill" onclick="insertSlashCommand('/hint')">/hint</span>
-              <span class="slash-pill" onclick="insertSlashCommand('/skip')">/skip</span>
-              <span class="slash-pill" onclick="insertSlashCommand('/progress')">/progress</span>
-              <span class="slash-pill" onclick="insertSlashCommand('/links')">/links</span>
-              <span class="slash-pill" onclick="insertSlashCommand('/review')">/review</span>
-            </div>
-            <form class="chat-form" id="chatForm">
-              <input type="text" id="chatInput" class="chat-input" placeholder="Ask a C#/.NET question or type a command like /start..." autocomplete="off">
-              <button type="submit" class="btn-primary" id="chatSendBtn">Send</button>
-            </form>
+        <div class="rail-tree-container" id="railTopicList">
+          <!-- Dynamically populated by app.js / quiz.js -->
+          <div class="rail-loading-state">Loading curriculum roadmap...</div>
+        </div>
+
+        <div class="rail-telemetry-footer">
+          <div class="mono-meta-row">
+            <span>ENGINE</span>
+            <span class="mono-status-online">READY</span>
+          </div>
+          <div class="mono-meta-row">
+            <span>RETENTION CHECKS</span>
+            <span id="railDueCount" style="color: var(--status-warning);">0 Due</span>
+          </div>
+          <div class="mono-meta-row">
+            <span>TOKENS TRACKED</span>
+            <span id="railTokenCount">0</span>
           </div>
         </div>
-      </section>
+      </aside>
 
-      <!-- 2. QUIZ / TRAINING VIEW -->
-      <section class="view-section" id="view-quiz">
-        <div class="quiz-container">
-          <div id="quizContent">
-            <!-- Rendered by quiz.js -->
-          </div>
-        </div>
-      </section>
+      <!-- Main Action Canvas -->
+      <main class="main-workspace">
 
-      <!-- 3. ROADMAP VIEW -->
-      <section class="view-section" id="view-roadmap">
-        <div style="max-width: 1040px; margin: 0 auto; padding: 32px 20px; width: 100%;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-            <div>
-              <h2 style="font-size: 22px; font-weight: 700;">C# & .NET Mastery Roadmap</h2>
-              <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Topics unlock as soon as the previous one reaches "Reviewing".</p>
+        <!-- 1. CHAT / REPL CONSOLE VIEW -->
+        <section class="view-section active" id="view-chat">
+          <div class="chat-container">
+            <!-- REPL Header Banner -->
+            <div class="repl-status-bar">
+              <span class="repl-prompt-symbol">❯_</span>
+              <span class="repl-context-text">CodeCoach Interactive REPL Console • .NET 9.0 Runtime Ready</span>
+              <span class="repl-status-pill">Active</span>
             </div>
-            <button class="btn-secondary" onclick="openPlacementModal()">Take Placement Test</button>
-          </div>
 
-          <div id="roadmapLevels">
-            <!-- Rendered dynamically -->
-          </div>
-        </div>
-      </section>
+            <!-- Messages Stream -->
+            <div class="chat-messages" id="chatMessages">
+              <!-- Rendered dynamically -->
+            </div>
 
-      <!-- 4. DASHBOARD VIEW -->
-      <section class="view-section" id="view-dashboard">
-        <div style="max-width: 1040px; margin: 0 auto; padding: 32px 20px; width: 100%;">
-          <h2 style="font-size: 22px; font-weight: 700; margin-bottom: 20px;">Your C# Learning Analytics</h2>
-
-          <!-- Top Stats Cards -->
-          <div class="dashboard-grid">
-            <div class="stat-card">
-              <div class="stat-label">Topics Mastered</div>
-              <div class="stat-value" style="color: var(--status-mastered);" id="statMastered">0</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">In Reviewing</div>
-              <div class="stat-value" style="color: var(--status-reviewing);" id="statReviewing">0</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Reviews Due Today</div>
-              <div class="stat-value" style="color: #f59e0b;" id="statReviewsDue">0</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Total LLM Tokens</div>
-              <div class="stat-value" style="color: var(--accent-cyan);" id="statTokens">0</div>
-            </div>
-          </div>
-
-          <!-- Score History Chart -->
-          <div class="stat-card" style="margin-bottom: 24px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-              <h3 style="font-size: 16px; font-weight: 700;">Recent Set Scores</h3>
-              <span style="font-size: 12px; color: var(--text-muted);">Pass: 70% • Mastery: 85%</span>
-            </div>
-            <div id="scoreHistoryChart" style="display: flex; align-items: flex-end; gap: 12px; height: 160px; padding-top: 20px; border-bottom: 1px solid var(--border-color);">
-              <!-- Bars injected dynamically -->
-            </div>
-          </div>
-
-          <!-- Due Retention Checks Section -->
-          <div class="stat-card" style="margin-bottom: 24px;">
-            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">🧠 Spaced Repetition (1d, 3d, 7d Retention)</h3>
-            <div id="retentionDueList">
-              <!-- Injected by dashboard.js -->
-            </div>
-          </div>
-
-          <!-- Custom Link Management -->
-          <div class="stat-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-              <h3 style="font-size: 16px; font-weight: 700;">Curated & Custom Learning Links</h3>
-              <button class="btn-primary" style="font-size: 12.5px; padding: 6px 12px;" onclick="openAddLinkModal()">+ Add Custom Link</button>
-            </div>
-            <div id="linksContainer">
-              <!-- Injected by dashboard.js -->
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 5. SETTINGS VIEW -->
-      <section class="view-section" id="view-settings">
-        <div style="max-width: 780px; margin: 0 auto; padding: 32px 20px; width: 100%;">
-          <h2 style="font-size: 22px; font-weight: 700; margin-bottom: 20px;">Notification & Training Preferences</h2>
-
-          <form id="settingsForm" style="display: flex; flex-direction: column; gap: 20px;">
-            <div class="stat-card">
-              <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 14px;">📅 Daily Reminder Schedule</h3>
-              <div style="display: flex; flex-direction: column; gap: 10px;">
-                <label style="font-size: 13.5px; color: var(--text-muted);">Reminder Times (24h, comma-separated)</label>
-                <input type="text" id="settingReminderTimes" class="chat-input" placeholder="08:00,20:00">
-                <span style="font-size: 12px; color: var(--text-dim);">Configured in your timezone: <strong id="settingTimezone">UTC</strong></span>
+            <!-- Input Console Bar -->
+            <div class="chat-input-bar">
+              <div class="slash-hints">
+                <span class="slash-pill" onclick="insertSlashCommand('/start ')">/start &lt;topic&gt;</span>
+                <span class="slash-pill" onclick="insertSlashCommand('/next')">/next</span>
+                <span class="slash-pill" onclick="insertSlashCommand('/hint')">/hint</span>
+                <span class="slash-pill" onclick="insertSlashCommand('/skip')">/skip</span>
+                <span class="slash-pill" onclick="insertSlashCommand('/progress')">/progress</span>
+                <span class="slash-pill" onclick="insertSlashCommand('/links')">/links</span>
+                <span class="slash-pill" onclick="insertSlashCommand('/review')">/review</span>
               </div>
+              <form class="chat-form" id="chatForm">
+                <input type="text" id="chatInput" class="chat-input" placeholder="Ask a C#/.NET architectural concept or enter /start <topic>..." autocomplete="off">
+                <button type="submit" class="btn-primary" id="chatSendBtn">Ask Concept</button>
+              </form>
             </div>
+          </div>
+        </section>
 
-            <div class="stat-card">
-              <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 14px;">🔔 Notification Channels</h3>
-              <div style="display: flex; flex-direction: column; gap: 12px;">
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                  <input type="checkbox" id="settingPushEnabled" style="width: 18px; height: 18px;">
-                  <span>Web Push (Desktop & Phone PWA)</span>
-                </label>
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                  <input type="checkbox" id="settingEmailEnabled" style="width: 18px; height: 18px;">
-                  <span>HTML Email (to <span id="settingUserEmail">user</span>)</span>
-                </label>
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                  <input type="checkbox" id="settingNtfyEnabled" style="width: 18px; height: 18px;">
-                  <span>ntfy.sh Fallback Phone Channel (<span id="settingNtfyTopic">configured</span>)</span>
-                </label>
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin-top: 6px;">
-                  <input type="checkbox" id="settingPauseReminders" style="width: 18px; height: 18px;">
-                  <span style="color: #f59e0b; font-weight: 600;">Pause all automated reminders</span>
-                </label>
+        <!-- 2. QUIZ / ACTIVE DRILL VIEW -->
+        <section class="view-section" id="view-quiz">
+          <div class="quiz-container">
+            <div id="quizContent">
+              <!-- Rendered by quiz.js -->
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. ROADMAP / CURRICULUM VIEW -->
+        <section class="view-section" id="view-roadmap">
+          <div class="content-wrapper-standard">
+            <div class="roadmap-header-deck">
+              <div>
+                <span class="mono-step">[ 02 // CURRICULUM PATH ]</span>
+                <h2 class="view-title">C# & .NET 9 Verification Path</h2>
+                <p class="view-subtitle">Each topic requires 4 proofs of retention: 70% MCQ benchmark, teach-back explanation, code implementation, and 1/3/7-day retests.</p>
               </div>
+              <button class="btn-secondary" onclick="openPlacementModal()">Calibrate My Starting Level (10 Qs)</button>
             </div>
 
-            <div class="stat-card">
-              <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 14px;">🌙 Quiet Hours</h3>
-              <div style="display: flex; flex-direction: column; gap: 10px;">
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                  <input type="checkbox" id="settingQuietHoursEnabled" style="width: 18px; height: 18px;">
-                  <span>Do not send reminders during quiet hours</span>
-                </label>
-                <div style="display: flex; gap: 12px; margin-top: 6px;">
-                  <div style="flex: 1;">
-                    <label style="font-size: 12px; color: var(--text-muted);">Start Time</label>
-                    <input type="text" id="settingQuietStart" class="chat-input" placeholder="22:00">
-                  </div>
-                  <div style="flex: 1;">
-                    <label style="font-size: 12px; color: var(--text-muted);">End Time</label>
-                    <input type="text" id="settingQuietEnd" class="chat-input" placeholder="07:00">
-                  </div>
+            <div id="roadmapLevels">
+              <!-- Rendered dynamically by quiz.js -->
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. DASHBOARD / RETENTION TELEMETRY VIEW -->
+        <section class="view-section" id="view-dashboard">
+          <div class="content-wrapper-standard">
+            <div class="view-header-deck">
+              <span class="mono-step">[ 03 // TELEMETRY ]</span>
+              <h2 class="view-title">Retention Analytics & Active Gates</h2>
+            </div>
+
+            <!-- Asymmetric Hero Telemetry Strip (Kill Three-Card Reflex) -->
+            <div class="telemetry-hero-strip">
+              <!-- Left 60%: Spaced Repetition Due Queue -->
+              <div class="telemetry-primary-card">
+                <div class="card-eyebrow">
+                  <span>SPACED REPETITION QUEUE</span>
+                  <span class="badge badge-accent">1d • 3d • 7d Gates</span>
+                </div>
+                <div id="retentionHeroContent">
+                  <!-- Populated dynamically by dashboard.js -->
+                </div>
+              </div>
+
+              <!-- Right 40%: Segmented Topic Mastery Progress Bar -->
+              <div class="telemetry-secondary-card">
+                <div class="card-eyebrow">
+                  <span>MASTERY GAUGE (31 TOPICS)</span>
+                </div>
+                <div class="mastery-segmented-bar" id="masterySegmentedBar">
+                  <div class="segment segment-mastered" style="width: 0%;" title="Mastered"></div>
+                  <div class="segment segment-reviewing" style="width: 0%;" title="Reviewing"></div>
+                  <div class="segment segment-learning" style="width: 3%;" title="Learning"></div>
+                  <div class="segment segment-locked" style="width: 97%;" title="Locked"></div>
+                </div>
+                <div class="mastery-legend-grid">
+                  <div class="legend-item"><span class="dot dot-mastered"></span> <span id="statMastered">0</span> Mastered</div>
+                  <div class="legend-item"><span class="dot dot-reviewing"></span> <span id="statReviewing">0</span> Reviewing</div>
+                  <div class="legend-item"><span class="dot dot-learning"></span> <span id="statLearning">1</span> Learning</div>
+                  <div class="legend-item"><span class="dot dot-locked"></span> <span id="statLocked">30</span> Locked</div>
                 </div>
               </div>
             </div>
 
-            <div style="display: flex; gap: 12px;">
-              <button type="submit" class="btn-primary">Save Preferences</button>
-              <button type="button" class="btn-secondary" onclick="sendTestPush()">Send Test Push</button>
-              <button type="button" class="btn-secondary" onclick="sendTestEmail()">Send Test Email</button>
+            <!-- Score History Performance Chart -->
+            <div class="telemetry-card" style="margin-top: 24px;">
+              <div class="card-header-flex">
+                <h3 class="card-title">Recent 25-Question Drill Scores</h3>
+                <span class="mono-threshold-label">Pass Benchmark: 70% • Mastery Benchmark: 85%</span>
+              </div>
+              <div id="scoreHistoryChart" class="score-chart-container">
+                <!-- Bars injected dynamically by dashboard.js -->
+              </div>
             </div>
-          </form>
-        </div>
-      </section>
 
-    </main>
+            <!-- Curated Official Resources -->
+            <div class="telemetry-card" style="margin-top: 24px;">
+              <div class="card-header-flex">
+                <div>
+                  <h3 class="card-title">Curated Documentation & Custom Links</h3>
+                  <p class="card-subtitle">Verified Microsoft Learn articles and official technical video walkthroughs.</p>
+                </div>
+                <button class="btn-primary" style="font-size: 13px; padding: 6px 14px;" onclick="openAddLinkModal()">+ Save Resource to Topic</button>
+              </div>
+              <div id="linksContainer" style="margin-top: 16px;">
+                <!-- Injected by dashboard.js -->
+              </div>
+            </div>
+
+            <!-- Monospace System Footer Status (Task 6 Demotion) -->
+            <div class="system-status-footer">
+              <span>SYSTEM::STATUS • SQLite Persistent Jobstore Active</span>
+              <span>TOKEN CONSUMPTION • <strong id="statTokens">0</strong> Tokens Tracked</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. SETTINGS / PREFERENCES VIEW -->
+        <section class="view-section" id="view-settings">
+          <div class="content-wrapper-narrow">
+            <div class="view-header-deck">
+              <span class="mono-step">[ 04 // SYSTEM CONFIG ]</span>
+              <h2 class="view-title">Training Schedule & Delivery Preferences</h2>
+            </div>
+
+            <form id="settingsForm" style="display: flex; flex-direction: column; gap: 20px; margin-top: 20px;">
+              <div class="telemetry-card">
+                <h3 class="card-title">📅 Daily Reminder Schedule</h3>
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 12px;">
+                  <label class="form-label">Reminder Times (24-Hour Format, Comma-Separated)</label>
+                  <input type="text" id="settingReminderTimes" class="chat-input" placeholder="08:00,20:00">
+                  <span class="form-helper-text">Evaluated in your configured timezone: <strong id="settingTimezone">Asia/Kolkata</strong></span>
+                </div>
+              </div>
+
+              <div class="telemetry-card">
+                <h3 class="card-title">🔔 Notification Delivery Channels</h3>
+                <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 14px;">
+                  <label class="checkbox-row">
+                    <input type="checkbox" id="settingPushEnabled" class="checkbox-control">
+                    <span>Web Push Notifications (Desktop & Phone PWA)</span>
+                  </label>
+                  <label class="checkbox-row">
+                    <input type="checkbox" id="settingEmailEnabled" class="checkbox-control">
+                    <span>HTML Email Digest (to <span id="settingUserEmail" class="mono-text">user</span>)</span>
+                  </label>
+                  <label class="checkbox-row">
+                    <input type="checkbox" id="settingNtfyEnabled" class="checkbox-control">
+                    <span>ntfy.sh Mobile Instant Fallback (<span id="settingNtfyTopic" class="mono-text">configured</span>)</span>
+                  </label>
+                  <label class="checkbox-row" style="margin-top: 6px;">
+                    <input type="checkbox" id="settingPauseReminders" class="checkbox-control">
+                    <span style="color: var(--status-warning); font-weight: 600;">Pause All Automated Reminders</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="telemetry-card">
+                <h3 class="card-title">🌙 Quiet Hours Boundaries</h3>
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
+                  <label class="checkbox-row">
+                    <input type="checkbox" id="settingQuietHoursEnabled" class="checkbox-control">
+                    <span>Mute all reminder notifications during quiet hours</span>
+                  </label>
+                  <div style="display: flex; gap: 16px; margin-top: 8px;">
+                    <div style="flex: 1;">
+                      <label class="form-label">Quiet Hours Start</label>
+                      <input type="text" id="settingQuietStart" class="chat-input" placeholder="22:00">
+                    </div>
+                    <div style="flex: 1;">
+                      <label class="form-label">Quiet Hours End</label>
+                      <input type="text" id="settingQuietEnd" class="chat-input" placeholder="07:00">
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 12px; margin-top: 8px;">
+                <button type="submit" class="btn-primary">Update Reminder Schedule & Quiet Hours</button>
+                <button type="button" class="btn-secondary" onclick="sendTestPush()">Send Test Push</button>
+                <button type="button" class="btn-secondary" onclick="sendTestEmail()">Send Test Email</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+    <!-- Mobile Bottom Navigation Bar (Thumb-Accessible for 375px) -->
+    <nav class="mobile-bottom-nav" role="tablist">
+      <button class="bottom-nav-btn active" data-tab="chat">
+        <span class="bottom-nav-icon">💬</span>
+        <span class="bottom-nav-label">REPL</span>
+      </button>
+      <button class="bottom-nav-btn" data-tab="quiz">
+        <span class="bottom-nav-icon">🎯</span>
+        <span class="bottom-nav-label">Drill</span>
+      </button>
+      <button class="bottom-nav-btn" data-tab="roadmap">
+        <span class="bottom-nav-icon">🗺️</span>
+        <span class="bottom-nav-label">Curriculum</span>
+      </button>
+      <button class="bottom-nav-btn" data-tab="dashboard">
+        <span class="bottom-nav-icon">📊</span>
+        <span class="bottom-nav-label">Telemetry</span>
+      </button>
+      <button class="bottom-nav-btn" data-tab="settings">
+        <span class="bottom-nav-icon">⚙️</span>
+        <span class="bottom-nav-label">Config</span>
+      </button>
+    </nav>
   </div>
 
-  <!-- MODALS -->
+  <!-- INTERACTION MODALS -->
 
-  <!-- Placement Test Modal -->
+  <!-- 1. Placement Test Modal -->
   <div class="modal-overlay" id="placementModal">
     <div class="modal-content">
       <button class="modal-close" onclick="closePlacementModal()">&times;</button>
-      <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 8px;">10-Question Placement Test</h2>
-      <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">
-        Answer these 10 targeted questions to let CodeCoach evaluate your current C# experience and unlock relevant curriculum topics.
+      <span class="mono-step">[ DIAGNOSTIC CALIBRATION ]</span>
+      <h2 class="modal-title">10-Question Diagnostic Placement Test</h2>
+      <p class="modal-subtitle">
+        Calibrate your starting level. Answer these 10 multi-level questions to unlock known C# fundamentals and jump directly to your actual knowledge boundary.
       </p>
       <div id="placementQuestionsContainer">
         <!-- Rendered by quiz.js -->
       </div>
-      <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
-        <button class="btn-primary" onclick="submitPlacementTest()">Submit Placement Test</button>
+      <div style="display: flex; justify-content: flex-end; margin-top: 24px;">
+        <button class="btn-primary" onclick="submitPlacementTest()">Submit for Diagnostic Evaluation</button>
       </div>
     </div>
   </div>
 
-  <!-- Teach-Back Modal -->
+  <!-- 2. Teach-Back Verification Modal -->
   <div class="modal-overlay" id="teachBackModal">
     <div class="modal-content">
       <button class="modal-close" onclick="closeTeachBackModal()">&times;</button>
-      <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 6px;">Step 2: Teach-Back Verification</h2>
-      <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">
-        Explain <strong id="teachBackTopicTitle">this topic</strong> in your own words (3 to 4 sentences).
-        The LLM will grade your accuracy, completeness, and clarity against a strict rubric.
+      <span class="mono-step">[ VERIFICATION GATE 2 // TEACH-BACK ]</span>
+      <h2 class="modal-title">Explain Concept in Your Own Words</h2>
+      <p class="modal-subtitle">
+        Explain <strong id="teachBackTopicTitle">this concept</strong> in 3 to 4 sentences. The evaluation engine grades your submission across 3 criteria: accuracy, topic completeness, and explanatory clarity.
       </p>
-      <textarea id="teachBackInput" class="code-editor-area" style="min-height: 120px;" placeholder="In C#, this concept works by..."></textarea>
+      <textarea id="teachBackInput" class="code-editor-area" style="min-height: 130px;" placeholder="In C#, this concept functions by..."></textarea>
       
       <div id="teachBackResult" style="margin-top: 16px; display: none;"></div>
 
-      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+      <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
         <button class="btn-secondary" onclick="closeTeachBackModal()">Cancel</button>
-        <button class="btn-primary" id="teachBackSubmitBtn" onclick="submitTeachBack()">Submit Explanation</button>
+        <button class="btn-primary" id="teachBackSubmitBtn" onclick="submitTeachBack()">Submit for Rubric Evaluation</button>
       </div>
     </div>
   </div>
 
-  <!-- Application Challenge Modal -->
+  <!-- 3. Application Challenge Modal -->
   <div class="modal-overlay" id="appChallengeModal">
     <div class="modal-content">
       <button class="modal-close" onclick="closeAppChallengeModal()">&times;</button>
-      <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 6px;">Step 3: Practical Application Challenge</h2>
-      <div id="appChallengePromptText" style="font-size: 14.5px; color: var(--text-main); margin-bottom: 14px; padding: 12px; background: var(--bg-app); border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+      <span class="mono-step">[ VERIFICATION GATE 3 // IMPLEMENTATION ]</span>
+      <h2 class="modal-title">Practical C# Coding Challenge</h2>
+      <div id="appChallengePromptText" class="code-challenge-prompt">
         Loading coding prompt...
       </div>
-      <label style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 4px; display: block;">Your C# Solution Code:</label>
-      <textarea id="appChallengeCodeInput" class="code-editor-area" style="min-height: 180px;"></textarea>
+      <label class="form-label" style="margin-top: 14px; display: block;">Your C# Implementation Code:</label>
+      <textarea id="appChallengeCodeInput" class="code-editor-area" style="min-height: 180px;" placeholder="// Implement your C# solution"></textarea>
 
       <div id="appChallengeResult" style="margin-top: 16px; display: none;"></div>
 
-      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+      <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
         <button class="btn-secondary" onclick="closeAppChallengeModal()">Close</button>
-        <button class="btn-primary" id="appChallengeSubmitBtn" onclick="submitAppChallenge()">Submit for Code Review</button>
+        <button class="btn-primary" id="appChallengeSubmitBtn" onclick="submitAppChallenge()">Evaluate Implementation Code</button>
       </div>
     </div>
   </div>
 
-  <!-- Add Custom Link Modal -->
+  <!-- 4. Add Custom Link Modal -->
   <div class="modal-overlay" id="addLinkModal">
-    <div class="modal-content" style="max-width: 500px;">
+    <div class="modal-content" style="max-width: 520px;">
       <button class="modal-close" onclick="closeAddLinkModal()">&times;</button>
-      <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Add Custom Study Link</h2>
-      <form id="addLinkForm" onsubmit="submitCustomLink(event)" style="display: flex; flex-direction: column; gap: 14px;">
+      <span class="mono-step">[ RESOURCE CURATION ]</span>
+      <h2 class="modal-title">Save Resource to Topic</h2>
+      <form id="addLinkForm" onsubmit="submitCustomLink(event)" style="display: flex; flex-direction: column; gap: 16px; margin-top: 14px;">
         <div>
-          <label style="font-size: 12.5px; color: var(--text-muted);">Topic</label>
+          <label class="form-label">Target Topic</label>
           <select id="linkTopicSelect" class="chat-input" style="width: 100%;"></select>
         </div>
         <div>
-          <label style="font-size: 12.5px; color: var(--text-muted);">Title</label>
-          <input type="text" id="linkTitleInput" class="chat-input" placeholder="e.g. C# Deep Dive on Threads" required>
+          <label class="form-label">Resource Title</label>
+          <input type="text" id="linkTitleInput" class="chat-input" placeholder="e.g. In-Depth Guide to C# Span<T>" required>
         </div>
         <div>
-          <label style="font-size: 12.5px; color: var(--text-muted);">URL</label>
+          <label class="form-label">Resource URL</label>
           <input type="url" id="linkUrlInput" class="chat-input" placeholder="https://..." required>
         </div>
         <div>
-          <label style="font-size: 12.5px; color: var(--text-muted);">Type</label>
+          <label class="form-label">Resource Type</label>
           <select id="linkTypeSelect" class="chat-input" style="width: 100%;">
-            <option value="article">Article</option>
-            <option value="video">Video</option>
+            <option value="article">Documentation / Article</option>
+            <option value="video">Technical Video Tutorial</option>
           </select>
         </div>
-        <button type="submit" class="btn-primary" style="margin-top: 8px;">Save Link</button>
+        <button type="submit" class="btn-primary" style="margin-top: 8px;">Save Resource</button>
       </form>
     </div>
   </div>
@@ -323,4 +429,3 @@
   <script src="/static/js/dashboard.js"></script>
 </body>
 </html>
-

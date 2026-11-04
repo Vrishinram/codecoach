@@ -12,11 +12,44 @@ async function loadDashboardStats() {
     const res = await fetch('/api/dashboard/stats');
     const data = await res.json();
 
-    document.getElementById('statMastered').textContent = data.topics_mastered;
-    document.getElementById('statReviewing').textContent = data.topics_reviewing;
-    document.getElementById('statReviewsDue').textContent = data.due_reviews_count;
-    document.getElementById('statTokens').textContent = data.total_tokens_used.toLocaleString();
-    document.getElementById('streakCount').textContent = data.current_streak;
+    const mastered = data.topics_mastered || 0;
+    const reviewing = data.topics_reviewing || 0;
+    const learning = data.topics_learning || 0;
+    const total = data.topics_total || 31;
+    const locked = Math.max(0, total - (mastered + reviewing + learning));
+
+    const elMastered = document.getElementById('statMastered');
+    if (elMastered) elMastered.textContent = mastered;
+    const elReviewing = document.getElementById('statReviewing');
+    if (elReviewing) elReviewing.textContent = reviewing;
+    const elLearning = document.getElementById('statLearning');
+    if (elLearning) elLearning.textContent = learning;
+    const elLocked = document.getElementById('statLocked');
+    if (elLocked) elLocked.textContent = locked;
+
+    const elReviewsDue = document.getElementById('statReviewsDue');
+    if (elReviewsDue) elReviewsDue.textContent = data.due_reviews_count;
+    const elTokens = document.getElementById('statTokens');
+    if (elTokens) elTokens.textContent = (data.total_tokens_used || 0).toLocaleString();
+    const elStreak = document.getElementById('streakCount');
+    if (elStreak) elStreak.textContent = data.current_streak;
+
+    // Segmented Mastery Progress Bar
+    const bar = document.getElementById('masterySegmentedBar');
+    if (bar && total > 0) {
+      const pMastered = (mastered / total) * 100;
+      const pReviewing = (reviewing / total) * 100;
+      const pLearning = (learning / total) * 100;
+      const pLocked = (locked / total) * 100;
+
+      const segs = bar.querySelectorAll('.segment');
+      if (segs.length >= 4) {
+        segs[0].style.width = `${pMastered.toFixed(1)}%`;
+        segs[1].style.width = `${pReviewing.toFixed(1)}%`;
+        segs[2].style.width = `${pLearning.toFixed(1)}%`;
+        segs[3].style.width = `${pLocked.toFixed(1)}%`;
+      }
+    }
 
     // Render Score History Chart
     renderScoreHistoryChart(data.score_history);
@@ -33,41 +66,50 @@ async function loadDashboardStats() {
 
 function renderScoreHistoryChart(history) {
   const chart = document.getElementById('scoreHistoryChart');
+  if (!chart) return;
+
   if (!history || !history.length) {
-    chart.innerHTML = '<div style="color: var(--text-muted); font-size: 13.5px; width: 100%; text-align: center; padding-top: 40px;">No completed sets yet. Complete your first set of 25 to see score trends!</div>';
+    chart.innerHTML = '<div style="color: var(--text-muted); font-size: 13.5px; width: 100%; text-align: center; padding-top: 40px; font-family: var(--font-mono);">[ No completed sets yet. Complete your first 25-Q drill to visualize score telemetry ]</div>';
     return;
   }
 
   chart.innerHTML = history.map(item => {
-    const heightPercent = Math.max(10, Math.min(100, item.score));
+    const heightPercent = Math.max(12, Math.min(100, item.score));
     const isMastered = item.score >= 85;
     const isPassed = item.score >= 70;
-    const color = isMastered ? '#10b981' : (isPassed ? '#0284c7' : '#ef4444');
+    const color = isMastered ? 'var(--status-success)' : (isPassed ? 'var(--accent-cyan)' : 'var(--status-error)');
 
     return `
       <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end;" title="${item.topic_title}: ${item.score}%">
-        <span style="font-size: 11px; font-weight: 700; color: ${color};">${item.score.toFixed(0)}%</span>
-        <div style="width: 100%; max-width: 38px; height: ${heightPercent}%; background: ${color}; border-radius: 4px 4px 0 0; transition: height 0.5s ease;"></div>
-        <span style="font-size: 10px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 50px;">${item.date}</span>
+        <span style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: ${color};">${item.score.toFixed(0)}%</span>
+        <div style="width: 100%; max-width: 32px; height: ${heightPercent}%; background: ${color}; border-radius: 2px 2px 0 0; transition: height 0.4s ease;"></div>
+        <span style="font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 46px;">${item.date}</span>
       </div>
     `;
   }).join('');
 }
 
 function renderDueRetentionList(quizzes) {
-  const container = document.getElementById('retentionDueList');
+  const container = document.getElementById('retentionHeroContent') || document.getElementById('retentionDueList');
+  if (!container) return;
+
   if (!quizzes || !quizzes.length) {
-    container.innerHTML = '<div style="color: var(--text-muted); font-size: 13.5px;">All spaced repetition retention checks are currently up to date! 🎉</div>';
+    container.innerHTML = `
+      <div style="padding: 18px 12px; text-align: left;">
+        <div style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">All Spaced Repetition Gates Clear</div>
+        <p style="font-size: 13px; color: var(--text-muted); margin: 0; line-height: 1.5;">No 1-day, 3-day, or 7-day retests currently scheduled. Complete a 25-question drill to activate a retention gate.</p>
+      </div>
+    `;
     return;
   }
 
   container.innerHTML = quizzes.map(q => `
-    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--bg-app); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 8px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); margin-bottom: 8px;">
       <div>
-        <div style="font-weight: 600; font-size: 14.5px;">${q.topic_title}</div>
-        <div style="font-size: 12px; color: #f59e0b;">Stage ${q.stage}/3 Spaced Repetition Due</div>
+        <div style="font-weight: 600; font-size: 14px; color: var(--text-primary); font-family: var(--font-ui);">${q.topic_title}</div>
+        <div style="font-size: 12px; color: var(--status-warning); font-family: var(--font-mono); margin-top: 2px;">Stage ${q.stage}/3 Gate Due • 5 Questions</div>
       </div>
-      <button class="btn-primary" style="font-size: 12.5px; padding: 6px 12px;" onclick="takeRetentionQuiz(${q.id}, '${q.topic_id}')">Take 5-Q Quiz &rarr;</button>
+      <button class="btn-primary" style="font-size: 12.5px; padding: 6px 14px; flex-shrink: 0;" onclick="takeRetentionQuiz(${q.id}, '${q.topic_id}')">Take 5-Q Quiz &rarr;</button>
     </div>
   `).join('');
 }
