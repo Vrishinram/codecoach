@@ -74,8 +74,14 @@ async def lifespan(app: FastAPI):
     logger.info("Startup Check Result: %s", check_res.get("status"))
 
     # 4. Initialize Persistent APScheduler (with misfire grace time for offline catch-up)
-    logger.info("Starting persistent scheduler...")
-    init_scheduler()
+    if not os.environ.get("VERCEL"):
+        logger.info("Starting persistent scheduler...")
+        try:
+            init_scheduler()
+        except Exception as e:
+            logger.warning("Could not initialize background scheduler: %s", e)
+    else:
+        logger.info("Running on Vercel serverless environment; in-process APScheduler background daemon skipped.")
 
     # 5. Background initial link health check
     db_links = SessionLocal()

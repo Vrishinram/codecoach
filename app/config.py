@@ -50,6 +50,14 @@ class Settings(BaseSettings):
     # SQLite
     DATABASE_URL: str = "sqlite:///./codecoach.db"
 
+    @property
+    def effective_database_url(self) -> str:
+        # Vercel and AWS Lambda serverless functions have a read-only filesystem except /tmp
+        if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+            if self.DATABASE_URL == "sqlite:///./codecoach.db":
+                return "sqlite:////tmp/codecoach.db"
+        return self.DATABASE_URL
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

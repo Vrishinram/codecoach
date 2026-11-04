@@ -71,7 +71,7 @@ def init_scheduler() -> AsyncIOScheduler:
 
     # Use SQLite jobstore so jobs are persisted
     jobstores = {
-        "default": SQLAlchemyJobStore(url=settings.DATABASE_URL, tablename="apscheduler_jobs")
+        "default": SQLAlchemyJobStore(url=settings.effective_database_url, tablename="apscheduler_jobs")
     }
 
     try:
