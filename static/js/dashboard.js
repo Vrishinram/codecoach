@@ -284,23 +284,110 @@ async function submitCustomLink(e) {
 }
 
 // --- Settings View ---
+function parseTimeList(raw) {
+  const parts = (raw || '').split(',').map(s => s.trim()).filter(Boolean);
+  if (!parts.length) return { ok: false, error: 'Add at least one reminder time (HH:MM).' };
+  const re = /^([01]\d|2[0-3]):([0-5]\d)$/;
+  for (const p of parts) {
+    if (!re.test(p)) return { ok: false, error: `Invalid time "${p}". Use 24h HH:MM format (e.g. 08:00).` };
+  }
+  return { ok: true, value: parts.join(',') };
+}
+
+function parseSingleTime(raw, label) {
+  const re = /^([01]\d|2[0-3]):([0-5]\d)$/;
+  const v = (raw || '').trim();
+  if (!re.test(v)) return { ok: false, error: `${label} must be HH:MM in 24h format (00:00–23:59).` };
+  return { ok: true, value: v };
+}
+
+function syncQuietHoursInputs() {
+  const checkbox = document.getElementById('settingQuietHoursEnabled');
+  if (!checkbox) return;
+  const enabled = checkbox.checked;
+  const startInput = document.getElementById('settingQuietStart');
+  const endInput = document.getElementById('settingQuietEnd');
+  if (startInput) {
+    startInput.disabled = !enabled;
+    startInput.style.opacity = enabled ? '1' : '0.45';
+    startInput.style.cursor = enabled ? 'text' : 'not-allowed';
+  }
+  if (endInput) {
+    endInput.disabled = !enabled;
+    endInput.style.opacity = enabled ? '1' : '0.45';
+    endInput.style.cursor = enabled ? 'text' : 'not-allowed';
+  }
+}
+
 async function loadSettingsView() {
   try {
     const res = await fetch('/api/settings');
     const s = await res.json();
 
-    document.getElementById('settingReminderTimes').value = s.reminder_times || '08:00,20:00';
-    document.getElementById('settingTimezone').textContent = s.timezone || 'UTC';
-    document.getElementById('settingUserEmail').textContent = s.user_email || 'Not configured';
-    document.getElementById('settingNtfyTopic').textContent = s.ntfy_topic || 'codecoach_demo';
+    const remInput = document.getElementById('settingReminderTimes');
+    if (remInput) remInput.value = s.reminder_times || '08:00,20:00';
 
-    document.getElementById('settingPushEnabled').checked = s.push_enabled;
-    document.getElementById('settingEmailEnabled').checked = s.email_enabled;
-    document.getElementById('settingNtfyEnabled').checked = s.ntfy_enabled;
-    document.getElementById('settingPauseReminders').checked = s.reminders_paused;
-    document.getElementById('settingQuietHoursEnabled').checked = s.quiet_hours_enabled;
-    document.getElementById('settingQuietStart').value = s.quiet_hours_start || '22:00';
-    document.getElementById('settingQuietEnd').value = s.quiet_hours_end || '07:00';
+    const tzEl = document.getElementById('settingTimezone');
+    if (tzEl) tzEl.textContent = s.timezone || 'UTC';
+
+    const emailEl = document.getElementById('settingUserEmail');
+    if (emailEl) emailEl.textContent = s.user_email || 'Not configured';
+
+    const emailInput = document.getElementById('settingUserEmailInput');
+    if (emailInput) {
+      emailInput.value = s.custom_email || '';
+      emailInput.placeholder = s.default_email ? `Default: ${s.default_email}` : 'e.g. batman@wayne-enterprises.com';
+    }
+
+    const ntfyEl = document.getElementById('settingNtfyTopic');
+    if (ntfyEl) ntfyEl.textContent = s.ntfy_topic || 'codecoach_demo';
+
+    const ntfyInput = document.getElementById('settingNtfyTopicInput');
+    if (ntfyInput) {
+      ntfyInput.value = s.custom_ntfy_topic || '';
+      ntfyInput.placeholder = s.default_ntfy_topic ? `Default: ${s.default_ntfy_topic}` : 'e.g. gotham_knight_csharp';
+    }
+
+    const pushBox = document.getElementById('settingPushEnabled');
+    if (pushBox) pushBox.checked = s.push_enabled;
+
+    const emailBox = document.getElementById('settingEmailEnabled');
+    if (emailBox) emailBox.checked = s.email_enabled;
+
+    const ntfyBox = document.getElementById('settingNtfyEnabled');
+    if (ntfyBox) ntfyBox.checked = s.ntfy_enabled;
+
+    const pauseBox = document.getElementById('settingPauseReminders');
+    if (pauseBox) pauseBox.checked = s.reminders_paused;
+
+    const quietBox = document.getElementById('settingQuietHoursEnabled');
+    if (quietBox) quietBox.checked = s.quiet_hours_enabled;
+
+    const qStart = document.getElementById('settingQuietStart');
+    if (qStart) qStart.value = s.quiet_hours_start || '22:00';
+
+    const qEnd = document.getElementById('settingQuietEnd');
+    if (qEnd) qEnd.value = s.quiet_hours_end || '07:00';
+
+    // Storage and App URL
+    const storageEngineEl = document.getElementById('settingStorageEngine');
+    if (storageEngineEl && s.storage_engine) {
+      storageEngineEl.textContent = s.storage_engine;
+    }
+    const appUrlEl = document.getElementById('settingAppUrl');
+    if (appUrlEl && s.app_url) {
+      appUrlEl.textContent = s.app_url;
+    }
+    const storageHint = document.getElementById('settingStorageHint');
+    if (storageHint && s.storage_engine) {
+      storageHint.style.display = s.storage_engine.includes('Ephemeral') ? 'block' : 'none';
+    }
+    const sysFooterEl = document.getElementById('systemStorageStatus');
+    if (sysFooterEl && s.storage_engine) {
+      sysFooterEl.textContent = `SYSTEM::STATUS • ${s.storage_engine} Active`;
+    }
+
+    syncQuietHoursInputs();
   } catch (err) {
     console.error('Error loading settings:', err);
   }
@@ -310,17 +397,59 @@ function initSettingsForm() {
   const form = document.getElementById('settingsForm');
   if (!form) return;
 
+  const quietBox = document.getElementById('settingQuietHoursEnabled');
+  if (quietBox) {
+    quietBox.addEventListener('change', syncQuietHoursInputs);
+  }
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    // Client-side 24h validation
+    const timesVal = parseTimeList(document.getElementById('settingReminderTimes').value);
+    if (!timesVal.ok) {
+      return showToast(timesVal.error, 'error');
+    }
+
+    const quietOn = document.getElementById('settingQuietHoursEnabled').checked;
+    let quietStart = document.getElementById('settingQuietStart').value.trim();
+    let quietEnd = document.getElementById('settingQuietEnd').value.trim();
+    if (quietOn) {
+      const qs = parseSingleTime(quietStart, 'Quiet start');
+      const qe = parseSingleTime(quietEnd, 'Quiet end');
+      if (!qs.ok) return showToast(qs.error, 'error');
+      if (!qe.ok) return showToast(qe.error, 'error');
+      quietStart = qs.value;
+      quietEnd = qe.value;
+    }
+
+    const customEmail = document.getElementById('settingUserEmailInput')?.value.trim() || '';
+    if (customEmail && (!customEmail.includes('@') || !customEmail.includes('.'))) {
+      return showToast('Invalid email address format.', 'error');
+    }
+
+    const customNtfy = document.getElementById('settingNtfyTopicInput')?.value.trim() || '';
+    const pushEnabled = document.getElementById('settingPushEnabled').checked;
+
+    // Issue 3: If user turns on Push notifications, prompt browser subscription if not already granted
+    if (pushEnabled && 'Notification' in window && Notification.permission !== 'granted') {
+      if (typeof window.requestAndSubscribePush === 'function') {
+        showToast('Requesting browser notification permissions...');
+        await window.requestAndSubscribePush();
+      }
+    }
+
     const payload = {
-      reminder_times: document.getElementById('settingReminderTimes').value.trim(),
-      push_enabled: document.getElementById('settingPushEnabled').checked,
+      reminder_times: timesVal.value,
+      push_enabled: pushEnabled,
       email_enabled: document.getElementById('settingEmailEnabled').checked,
       ntfy_enabled: document.getElementById('settingNtfyEnabled').checked,
       reminders_paused: document.getElementById('settingPauseReminders').checked,
-      quiet_hours_enabled: document.getElementById('settingQuietHoursEnabled').checked,
-      quiet_hours_start: document.getElementById('settingQuietStart').value.trim(),
-      quiet_hours_end: document.getElementById('settingQuietEnd').value.trim()
+      quiet_hours_enabled: quietOn,
+      quiet_hours_start: quietStart,
+      quiet_hours_end: quietEnd,
+      user_email: customEmail,
+      ntfy_topic: customNtfy
     };
 
     try {
@@ -330,7 +459,15 @@ function initSettingsForm() {
         body: JSON.stringify(payload)
       });
       const data = await res.json();
-      showToast(data.message || 'System preferences committed.');
+      if (!res.ok) {
+        throw new Error(data.detail || 'Validation failed on server.');
+      }
+      // Re-fetch persisted values to confirm
+      await loadSettingsView();
+      if (typeof loadGlobalSettings === 'function') {
+        await loadGlobalSettings();
+      }
+      showToast(data.message || 'System preferences committed and confirmed.');
     } catch (err) {
       showToast('Failed to commit preferences: ' + err.message, 'error');
     }
@@ -339,11 +476,24 @@ function initSettingsForm() {
 
 async function sendTestPush() {
   try {
+    if ('Notification' in window && Notification.permission !== 'granted') {
+      showToast('Requesting browser notification permissions first...');
+      if (typeof window.requestAndSubscribePush === 'function') {
+        await window.requestAndSubscribePush();
+      }
+    }
+
     const res = await fetch('/api/push/test', { method: 'POST' });
     const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.detail || 'Failed to dispatch test push');
+    }
     showToast(data.message);
+    if (data.web_push_delivered === 0 && 'Notification' in window && Notification.permission !== 'granted') {
+      showToast('Tip: Allow browser notifications or click the Gotham Bell to register this device.', 'error');
+    }
   } catch (e) {
-    showToast('Failed to trigger test alert: ' + e.message, 'error');
+    showToast('Failed to trigger test push: ' + e.message, 'error');
   }
 }
 
@@ -351,8 +501,11 @@ async function sendTestEmail() {
   try {
     const res = await fetch('/api/email/test', { method: 'POST' });
     const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.detail || 'Failed to trigger test email');
+    }
     showToast(data.message);
   } catch (e) {
-    showToast('Failed to trigger test email: ' + e.message, 'error');
+    showToast(e.message, 'error');
   }
 }

@@ -235,4 +235,14 @@ def apply_migration_002(conn):
         # Column likely already exists
         pass
 
+    # 6. Add custom_email and custom_ntfy_topic to user_profile idempotently
+    try:
+        conn.execute(text("ALTER TABLE user_profile ADD COLUMN custom_email VARCHAR(120);"))
+    except Exception:
+        pass
+    try:
+        conn.execute(text("ALTER TABLE user_profile ADD COLUMN custom_ntfy_topic VARCHAR(120);"))
+    except Exception:
+        pass
+
 

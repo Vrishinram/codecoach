@@ -50,7 +50,7 @@ async def send_test_push(db: Session = Depends(get_db)):
         db=db,
         title=f"{settings.ASSISTANT_NAME} Test Push",
         body="Congratulations! Your device notifications are active and ready for daily C# training.",
-        url=f"{settings.APP_URL}/#dashboard",
+        url=f"{settings.effective_app_url}/#dashboard",
         notification_type="test"
     )
 
@@ -58,41 +58,57 @@ async def send_test_push(db: Session = Depends(get_db)):
         db=db,
         title=f"{settings.ASSISTANT_NAME} Test",
         body="Device notifications are active and ready for daily C# training.",
-        url=f"{settings.APP_URL}/#dashboard",
+        url=f"{settings.effective_app_url}/#dashboard",
         notification_type="test"
     )
 
+    msg = f"Test push sent! (Web Push: {push_count} device{'s' if push_count != 1 else ''}, ntfy: {'Delivered' if ntfy_ok else 'Inactive'})"
     return {
         "status": "success",
         "web_push_delivered": push_count,
         "ntfy_delivered": ntfy_ok,
-        "message": f"Test push sent! (Web Push: {push_count} devices, ntfy: {ntfy_ok})"
+        "message": msg
     }
 
 @router.post("/email/test")
 async def send_test_email(db: Session = Depends(get_db)):
     """
-    Sends an immediate test HTML email to USER_EMAIL.
+    Sends an immediate test HTML email to USER_EMAIL or custom configured email.
     """
+    profile = db.query(UserProfile).first()
+    target_email = (profile.custom_email if profile and profile.custom_email else None) or settings.USER_EMAIL
+
+    if not target_email:
+        raise HTTPException(
+            status_code=400,
+            detail="Destination email not configured. Please set your email in Preferences or define USER_EMAIL in your environment."
+        )
+
+    if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
+        raise HTTPException(
+            status_code=400,
+            detail="SMTP server credentials not configured. Please configure SMTP_HOST, SMTP_USER, and SMTP_PASSWORD in your Vercel project environment."
+        )
+
     sent = send_html_email(
         db=db,
-        to_email=settings.USER_EMAIL,
+        to_email=target_email,
         subject=f"{settings.ASSISTANT_NAME} Test Email - Notifications Active",
         template_name="celebration.html",
         context={
             "celebration_title": "Notifications Connected!",
             "celebration_message": f"Your email reminders from {settings.ASSISTANT_NAME} are active.",
-            "celebration_detail": f"You will receive daily C# training updates and weekly digests at {settings.USER_EMAIL}.",
-            "app_url": settings.APP_URL
+            "celebration_detail": f"You will receive daily C# training updates and weekly digests at {target_email}.",
+            "app_url": settings.effective_app_url
         },
         notification_type="test"
     )
 
     if not sent:
         raise HTTPException(
-            status_code=500,
-            detail="Failed to send test email. Please verify SMTP_USER, SMTP_PASSWORD, and USER_EMAIL in your .env file."
+            status_code=400,
+            detail=f"Failed to deliver email to {target_email}. Please check SMTP_HOST, SMTP_PORT, and SMTP_PASSWORD app-password credentials."
         )
 
-    return {"status": "success", "message": f"Test email sent successfully to {settings.USER_EMAIL}."}
+    return {"status": "success", "message": f"Test email sent successfully to {target_email}."}
 

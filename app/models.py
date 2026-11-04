@@ -262,6 +262,8 @@ class UserProfile(Base):
     quiet_hours_start = Column(String(5), default="22:00")
     quiet_hours_end = Column(String(5), default="07:00")
     reminder_times = Column(String(50), default="08:00,20:00")
+    custom_email = Column(String(120), nullable=True)
+    custom_ntfy_topic = Column(String(120), nullable=True)
 
     updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
 

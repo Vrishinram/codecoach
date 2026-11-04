@@ -566,7 +566,7 @@
 
             <!-- Monospace System Footer Status -->
             <div class="system-status-footer">
-              <span>SYSTEM::STATUS • SQLite Persistent Jobstore Active</span>
+              <span id="systemStorageStatus">SYSTEM::STATUS • Evaluating...</span>
               <span>TOKEN CONSUMPTION • <strong id="statTokens">0</strong> Tokens Tracked</span>
             </div>
           </div>
@@ -597,14 +597,29 @@
                     <input type="checkbox" id="settingPushEnabled" style="accent-color: var(--accent-yellow);">
                     <span><strong>Browser Push Notifications</strong> (Actionable verification reminders)</span>
                   </label>
-                  <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                    <input type="checkbox" id="settingEmailEnabled" style="accent-color: var(--accent-yellow);">
-                    <span><strong>Email Reminders</strong> (Destination: <span id="settingUserEmail" style="color: var(--accent-yellow);"></span>)</span>
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                    <input type="checkbox" id="settingNtfyEnabled" style="accent-color: var(--accent-yellow);">
-                    <span><strong>ntfy.sh Mobile Alerts</strong> (Topic: <code id="settingNtfyTopic" class="inline-code"></code>)</span>
-                  </label>
+
+                  <div style="border-top: 1px solid var(--border-subtle); padding-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                      <input type="checkbox" id="settingEmailEnabled" style="accent-color: var(--accent-yellow);">
+                      <span><strong>Email Reminders</strong> (Active: <span id="settingUserEmail" style="color: var(--accent-yellow);"></span>)</span>
+                    </label>
+                    <div style="padding-left: 26px; display: flex; flex-direction: column; gap: 4px;">
+                      <label style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">Custom Email Address (Leave blank to use environment default)</label>
+                      <input type="email" id="settingUserEmailInput" class="chat-input" placeholder="e.g. batman@wayne-enterprises.com">
+                    </div>
+                  </div>
+
+                  <div style="border-top: 1px solid var(--border-subtle); padding-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                      <input type="checkbox" id="settingNtfyEnabled" style="accent-color: var(--accent-yellow);">
+                      <span><strong>ntfy.sh Mobile Alerts</strong> (Active: <code id="settingNtfyTopic" class="inline-code"></code>)</span>
+                    </label>
+                    <div style="padding-left: 26px; display: flex; flex-direction: column; gap: 4px;">
+                      <label style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">Custom ntfy.sh Topic (Leave blank to use environment default)</label>
+                      <input type="text" id="settingNtfyTopicInput" class="chat-input" placeholder="e.g. gotham_knight_csharp">
+                    </div>
+                  </div>
+
                   <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
                     <input type="checkbox" id="settingPauseReminders" style="accent-color: var(--accent-yellow);">
                     <span style="color: var(--status-error);"><strong>Pause All Reminders</strong> (Temporary study freeze)</span>
@@ -621,14 +636,32 @@
                   </label>
                   <div style="display: flex; gap: 16px; align-items: center;">
                     <div style="flex: 1;">
-                      <label style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Quiet Start</label>
+                      <label style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Quiet Start (24h HH:MM)</label>
                       <input type="text" id="settingQuietStart" class="chat-input" placeholder="22:00">
                     </div>
                     <div style="flex: 1;">
-                      <label style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Quiet End</label>
+                      <label style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Quiet End (24h HH:MM)</label>
                       <input type="text" id="settingQuietEnd" class="chat-input" placeholder="07:00">
                     </div>
                   </div>
+                </div>
+              </div>
+
+              <!-- Storage & Infrastructure Telemetry -->
+              <div class="telemetry-card">
+                <h3 style="font-family: var(--font-display); font-size: 20px; color: var(--accent-yellow); margin-bottom: 10px;">🏛️ System & Infrastructure Status</h3>
+                <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-muted);">Storage Engine:</span>
+                    <span id="settingStorageEngine" class="badge badge-topic" style="font-size: 11px;">Evaluating...</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-muted);">Effective App URL:</span>
+                    <code id="settingAppUrl" class="inline-code" style="font-size: 11px;">Loading...</code>
+                  </div>
+                  <p id="settingStorageHint" style="font-size: 11px; color: var(--text-muted); margin: 4px 0 0; display: none;">
+                    💡 Notice: Running on serverless ephemeral SQLite. For permanent multi-region storage across serverless spins, configure <code class="inline-code">DATABASE_URL</code> with PostgreSQL (Neon / Supabase) or Turso.
+                  </p>
                 </div>
               </div>
 

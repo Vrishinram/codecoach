@@ -306,6 +306,7 @@ async function requestAndSubscribePush() {
     showToast('Failed to register push: ' + err.message, 'error');
   }
 }
+window.requestAndSubscribePush = requestAndSubscribePush;
 
 // Global Settings API
 async function loadGlobalSettings() {
@@ -318,6 +319,12 @@ async function loadGlobalSettings() {
       const brandElem = document.getElementById('assistantBrand');
       if (brandElem) brandElem.textContent = data.assistant_name;
       document.title = `${data.assistant_name} • The Dark Knight of .NET`;
+    }
+    if (data.storage_engine) {
+      const sysFooterEl = document.getElementById('systemStorageStatus');
+      if (sysFooterEl) {
+        sysFooterEl.textContent = `SYSTEM::STATUS • ${data.storage_engine} Active`;
+      }
     }
   } catch (e) {
     console.warn('Could not load settings:', e);

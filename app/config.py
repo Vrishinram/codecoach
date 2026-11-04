@@ -51,6 +51,33 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./codecoach.db"
 
     @property
+    def effective_app_url(self) -> str:
+        # Check if user set an explicit external APP_URL
+        if self.APP_URL and self.APP_URL != "http://localhost:8000" and not self.APP_URL.startswith("http://localhost"):
+            return self.APP_URL
+        # On Vercel, use VERCEL_PROJECT_PRODUCTION_URL or VERCEL_URL or default to production app domain
+        prod_url = os.environ.get("VERCEL_PROJECT_PRODUCTION_URL")
+        if prod_url:
+            return f"https://{prod_url}"
+        v_url = os.environ.get("VERCEL_URL")
+        if v_url:
+            return f"https://{v_url}"
+        if os.environ.get("VERCEL"):
+            return "https://codecoach-blush.vercel.app"
+        return self.APP_URL
+
+    @property
+    def storage_engine_label(self) -> str:
+        url = self.effective_database_url
+        if "postgresql" in url:
+            return "PostgreSQL (Hosted)"
+        elif "libsql" in url:
+            return "Turso LibSQL"
+        elif "/tmp/" in url:
+            return "SQLite (Serverless /tmp Ephemeral)"
+        return "SQLite (Local Persistent)"
+
+    @property
     def effective_database_url(self) -> str:
         url = self.DATABASE_URL
         # Normalize postgres:// to postgresql:// for SQLAlchemy compatibility

@@ -1,5 +1,8 @@
+import re
 from typing import List, Optional, Any, Dict
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+TIME_24H_REGEX = re.compile(r"^([01]\d|2[0-3]):([0-5]\d)$")
 
 # --- Curriculum & Links ---
 class LinkItem(BaseModel):
@@ -166,6 +169,41 @@ class SettingsUpdate(BaseModel):
     quiet_hours_start: Optional[str] = None
     quiet_hours_end: Optional[str] = None
     reminder_times: Optional[str] = None
+    user_email: Optional[str] = None
+    ntfy_topic: Optional[str] = None
+
+    @field_validator("reminder_times")
+    @classmethod
+    def validate_reminder_times(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        parts = [p.strip() for p in v.split(",") if p.strip()]
+        if not parts:
+            raise ValueError("Add at least one reminder time (HH:MM).")
+        for p in parts:
+            if not TIME_24H_REGEX.match(p):
+                raise ValueError(f"Invalid time '{p}'. Use 24h HH:MM format (e.g. 08:00).")
+        return ",".join(parts)
+
+    @field_validator("quiet_hours_start", "quiet_hours_end")
+    @classmethod
+    def validate_quiet_hours(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        val = v.strip()
+        if not TIME_24H_REGEX.match(val):
+            raise ValueError(f"Quiet hour must be in 24h HH:MM format (00:00 to 23:59), got '{v}'.")
+        return val
+
+    @field_validator("user_email")
+    @classmethod
+    def validate_email(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        val = v.strip()
+        if val and ("@" not in val or "." not in val.split("@")[-1]):
+            raise ValueError("Invalid email format.")
+        return val
 
 class DashboardStats(BaseModel):
     assistant_name: str
