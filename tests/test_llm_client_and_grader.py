@@ -98,6 +98,7 @@ async def test_teach_back_grader_schema_validation(db_session, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_grok_configuration_and_model_priority(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "")
     monkeypatch.setenv("XAI_API_KEY", "xai-test-key-12345")
     from app.config import Settings
     cfg = Settings()
@@ -115,6 +116,7 @@ async def test_grok_configuration_and_model_priority(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_grok_startup_check_success(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "")
     monkeypatch.setenv("XAI_API_KEY", "xai-test-key-12345")
     client = LLMClient()
 
@@ -134,6 +136,7 @@ async def test_grok_startup_check_success(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_grok_completion_and_streaming(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "")
     monkeypatch.setenv("XAI_API_KEY", "xai-test-key-12345")
     client = LLMClient()
 

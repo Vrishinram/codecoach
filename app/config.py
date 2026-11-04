@@ -91,6 +91,17 @@ class Settings(BaseSettings):
     @property
     def effective_database_url(self) -> str:
         url = self.DATABASE_URL
+        if not url or url == "sqlite:///./codecoach.db":
+            # Check standard hosted database environment variables injected by Vercel/Neon/Supabase/Turso
+            url = (
+                os.environ.get("POSTGRES_URL") or
+                os.environ.get("POSTGRES_URL_NON_POOLING") or
+                os.environ.get("DATABASE_URL") or
+                os.environ.get("SUPABASE_DB_URL") or
+                os.environ.get("TURSO_DATABASE_URL") or
+                "sqlite:///./codecoach.db"
+            ).strip()
+
         # Normalize postgres:// to postgresql:// for SQLAlchemy compatibility
         if url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql://", 1)

@@ -1,6 +1,7 @@
 import pytest
 import asyncio
 from unittest.mock import MagicMock
+from starlette.testclient import TestClient
 from pywebpush import WebPushException
 from app.models import PushSubscription, NotificationLog
 from app.services.push_service import send_web_push, send_ntfy_push
@@ -55,4 +56,71 @@ def test_send_html_email_mocked(db_session, monkeypatch):
     log = db_session.query(NotificationLog).filter(NotificationLog.channel == "email").first()
     assert log is not None
     assert log.status == "sent"
+
+def test_push_subscription_validation_and_registration(client: TestClient):
+    # 1. Non-HTTPS endpoint rejected
+    res = client.post("/api/push/subscribe", json={
+        "endpoint": "http://insecure.endpoint.com",
+        "keys": {"p256dh": "BA123456789012345678901234567890123456789012", "auth": "auth123456"}
+    })
+    assert res.status_code == 400
+    assert "HTTPS" in res.json()["detail"]
+
+    # 2. Too short / fake keys rejected
+    res = client.post("/api/push/subscribe", json={
+        "endpoint": "https://fcm.googleapis.com/fcm/send/test-sub-123",
+        "keys": {"p256dh": "fake_short", "auth": "fake"}
+    })
+    assert res.status_code == 400
+    assert "Malformed cryptographic keys" in res.json()["detail"]
+
+    # 3. Valid keys accepted
+    valid_p256dh = "BIPxW7F3cT_s8H1y9xK7zM6qN4aP3bC2vD1eE0fG9hI8jK7lM6nO5pQ4rS3tU2vW1xY0zA=="
+    valid_auth = "auth_token_sample_123"
+    res = client.post("/api/push/subscribe", json={
+        "endpoint": "https://fcm.googleapis.com/fcm/send/test-sub-123",
+        "keys": {"p256dh": valid_p256dh, "auth": valid_auth},
+        "user_agent": "Mozilla/5.0 TestBrowser"
+    })
+    assert res.status_code == 200
+    assert res.json()["status"] == "subscribed"
+
+def test_push_test_diagnostics(client: TestClient, monkeypatch, db_session):
+    # Mock send_ntfy_push so network call is avoided
+    async def mock_ntfy(*args, **kwargs):
+        return True
+    monkeypatch.setattr("app.api.routes_notifications.send_ntfy_push", mock_ntfy)
+
+    # 1. When DB has no subscriptions
+    db_session.query(PushSubscription).delete()
+    db_session.commit()
+    res = client.post("/api/push/test")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["subscriptions_registered"] == 0
+    assert data["web_push_delivered"] == 0
+
+    # 2. When DB has a registered subscription but webpush raises WebPushException
+    sub = PushSubscription(
+        endpoint="https://fcm.googleapis.com/fcm/send/device-a",
+        p256dh="key1234567890123456789012345",
+        auth="auth12345"
+    )
+    db_session.add(sub)
+    db_session.commit()
+
+    def mock_failing_webpush(*args, **kwargs):
+        raise WebPushException("Invalid p256dh key specified")
+
+    monkeypatch.setattr("app.services.push_service.webpush", mock_failing_webpush)
+
+    res = client.post("/api/push/test")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["subscriptions_registered"] == 1
+    assert data["web_push_delivered"] == 0
+    assert len(data["delivery_errors"]) >= 1
+    assert "Invalid p256dh key" in data["delivery_errors"][0]
+    assert "Found 1 registered device(s)" in data["message"]
+
 

@@ -529,13 +529,21 @@ async function sendTestPush() {
     if (!res.ok) throw new Error(data.detail || data.message || 'Push test failed');
 
     if ((data.web_push_delivered || 0) === 0) {
-      showToast(
-        (data.ntfy_delivered ? 'ntfy delivered. ' : '') +
-          'Web Push: 0 devices. Click the bell, Allow notifications, then Test Push again.',
-        'error'
-      );
+      if (data.subscriptions_registered > 0) {
+        showToast(
+          (data.ntfy_delivered ? 'ntfy delivered. ' : '') +
+            `Found ${data.subscriptions_registered} registered device(s), but Web Push failed: ${data.delivery_errors?.[0] || 'Invalid crypto keys or endpoint.'}`,
+          'error'
+        );
+      } else {
+        showToast(
+          (data.ntfy_delivered ? 'ntfy delivered. ' : '') +
+            'Web Push: 0 devices in DB. Click "Register This Device", Allow notifications in browser, then Test Push again.',
+          'error'
+        );
+      }
     } else {
-      showToast(data.message || `Web Push delivered to ${data.web_push_delivered} device(s).`);
+      showToast(data.message || `Web Push delivered to ${data.web_push_delivered} device(s)!`);
     }
   } catch (e) {
     showToast('Test push failed: ' + e.message, 'error');

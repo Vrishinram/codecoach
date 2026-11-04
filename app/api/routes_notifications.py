@@ -29,35 +29,54 @@ async def get_vapid_public_key():
 async def subscribe_web_push(payload: PushSubscriptionCreate, db: Session = Depends(get_db)):
     """
     Stores or updates a browser Web Push subscription.
+    Validates that endpoint is an HTTPS URL and cryptographic keys are well-formed.
     """
-    existing = db.query(PushSubscription).filter(PushSubscription.endpoint == payload.endpoint).first()
+    endpoint = (payload.endpoint or "").strip()
+    if not endpoint.startswith("https://"):
+        raise HTTPException(status_code=400, detail="Invalid push endpoint. Must be an HTTPS URL.")
+
+    p256dh = (payload.keys.p256dh or "").strip() if payload.keys else ""
+    auth = (payload.keys.auth or "").strip() if payload.keys else ""
+
+    if not p256dh or not auth:
+        raise HTTPException(status_code=400, detail="Missing Web Push cryptographic keys (p256dh and auth are required).")
+
+    if len(p256dh) < 20 or len(auth) < 8:
+        raise HTTPException(
+            status_code=400,
+            detail="Malformed cryptographic keys. p256dh and auth must be valid base64url keys from browser pushManager.subscribe()."
+        )
+
+    existing = db.query(PushSubscription).filter(PushSubscription.endpoint == endpoint).first()
     if existing:
-        existing.p256dh = payload.keys.p256dh
-        existing.auth = payload.keys.auth
+        existing.p256dh = p256dh
+        existing.auth = auth
         existing.user_agent = payload.user_agent
     else:
         sub = PushSubscription(
-            endpoint=payload.endpoint,
-            p256dh=payload.keys.p256dh,
-            auth=payload.keys.auth,
+            endpoint=endpoint,
+            p256dh=p256dh,
+            auth=auth,
             user_agent=payload.user_agent
         )
         db.add(sub)
     db.commit()
-    logger.info("Registered Web Push subscription endpoint: %s...", payload.endpoint[:30])
+    logger.info("Registered Web Push subscription endpoint: %s...", endpoint[:30])
     return {"status": "subscribed", "message": "Device notifications registered successfully."}
 
 @router.post("/push/test")
 async def send_test_push(db: Session = Depends(get_db)):
     """
     Sends an immediate test push to all subscribed devices and optional ntfy channel.
+    Returns explicit diagnostics on registered devices, delivered pushes, and failure causes.
     """
-    push_count = await send_web_push(
+    push_stats = await send_web_push(
         db=db,
         title=f"{settings.ASSISTANT_NAME} Test Push",
         body="Congratulations! Your device notifications are active and ready for daily C# training.",
         url=f"{settings.effective_app_url}/#dashboard",
-        notification_type="test"
+        notification_type="test",
+        return_details=True
     )
 
     ntfy_ok = await send_ntfy_push(
@@ -68,11 +87,25 @@ async def send_test_push(db: Session = Depends(get_db)):
         notification_type="test"
     )
 
-    msg = f"Test push sent! (Web Push: {push_count} device{'s' if push_count != 1 else ''}, ntfy: {'Delivered' if ntfy_ok else 'Inactive'})"
+    reg = push_stats["registered"]
+    deliv = push_stats["delivered"]
+
+    if reg == 0:
+        msg = "Web Push: 0 registered devices in database. Allow notifications or click 'Register This Device'."
+    elif deliv > 0:
+        msg = f"Test push sent! (Web Push: {deliv}/{reg} device{'s' if reg != 1 else ''} delivered, ntfy: {'Delivered' if ntfy_ok else 'Inactive'})"
+    else:
+        err_msg = push_stats["errors"][0] if push_stats["errors"] else "Delivery failed"
+        msg = f"Found {reg} registered device(s), but Web Push failed: {err_msg}"
+
     return {
-        "status": "success",
-        "web_push_delivered": push_count,
+        "status": "success" if (deliv > 0 or ntfy_ok) else "partial",
+        "subscriptions_registered": reg,
+        "web_push_delivered": deliv,
+        "web_push_failed": push_stats["failed"],
+        "delivery_errors": push_stats["errors"],
         "ntfy_delivered": ntfy_ok,
+        "storage_engine": settings.storage_engine_label,
         "message": msg
     }
 
