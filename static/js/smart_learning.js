@@ -18,30 +18,83 @@ let isCardFlipped = false;
 let currentConceptMapData = null;
 let activeStudyPlanData = null;
 
+// Forward declare & define core explain function
+function explainConceptDifferently(perspective = 'analogy') {
+  return requestExplanationPerspective(perspective);
+}
+
 // Expose on window.CodeCoach
+window.CodeCoach = window.CodeCoach || {};
 window.CodeCoach.startWeakSpotDrill = startWeakSpotDrill;
 window.CodeCoach.loadConceptMap = loadConceptMap;
 window.CodeCoach.loadFlashcardsView = loadFlashcardsView;
 window.CodeCoach.loadStudyPlanView = loadStudyPlanView;
 window.CodeCoach.explainConceptDifferently = explainConceptDifferently;
+window.CodeCoach.requestExplanationPerspective = requestExplanationPerspective;
 window.CodeCoach.saveCurrentExplanationAsNote = saveCurrentExplanationAsNote;
+
+// Expose globally for inline onclick handlers
+window.explainConceptDifferently = explainConceptDifferently;
+window.requestExplanationPerspective = requestExplanationPerspective;
+window.toggleExplainMenu = toggleExplainMenu;
+window.copyAltExplanation = copyAltExplanation;
+window.saveCurrentExplanationAsNote = saveCurrentExplanationAsNote;
+window.saveNoteDirectly = saveNoteDirectly;
+window.loadNextDrillQuestion = loadNextDrillQuestion;
 
 // ============================================================================
 // 1. WEAK-SPOT DRILL LAUNCHER
 // ============================================================================
 
 async function startWeakSpotDrill() {
-  showToast('🦇 Generating 10-Question Weak-Spot Drill from missed questions...', 'info');
+  switchTab('quiz');
+  const container = document.getElementById('quizContent');
+  container.innerHTML = `
+    <div class="quiz-card" style="text-align: center; padding: 48px 24px;">
+      <div class="loading-bat-spinner">🦇</div>
+      <h3 style="font-family: var(--font-display); font-size: 30px; color: var(--accent-yellow); margin-top: 14px; letter-spacing: 1px;">SYNTHESIZING WEAK-SPOT DRILL</h3>
+      <p style="color: var(--text-muted); font-size: 13.5px; margin: 4px 0 16px;">Targeting missed subtopics from your recent question attempts</p>
+
+      <div class="drill-progress-container">
+        <div class="drill-progress-header">
+          <span class="drill-progress-title">Diagnostic Filter</span>
+          <span id="drillProgressPercent" class="drill-progress-percent">15%</span>
+        </div>
+        <div class="drill-progress-track">
+          <div id="drillProgressBarFill" class="drill-progress-fill" style="width: 15%;"></div>
+        </div>
+        <div id="drillProgressCheckpoint" class="drill-progress-checkpoint">
+          Scanning error history and low-accuracy subtopics...
+        </div>
+      </div>
+    </div>
+  `;
+
+  let currentPct = 15;
+  const fillEl = document.getElementById('drillProgressBarFill');
+  const pctEl = document.getElementById('drillProgressPercent');
+  const textEl = document.getElementById('drillProgressCheckpoint');
+  const ticker = setInterval(() => {
+    if (currentPct < 92) {
+      currentPct += 6;
+      if (fillEl) fillEl.style.width = `${currentPct}%`;
+      if (pctEl) pctEl.textContent = `${currentPct}%`;
+      if (currentPct > 45 && textEl) textEl.textContent = "Synthesizing 10 high-precision corrective scenarios...";
+      if (currentPct > 75 && textEl) textEl.textContent = "Locking in remediation criteria...";
+    }
+  }, 400);
+
   try {
     const res = await fetch('/api/smart-learning/weak-spot-drill', { method: 'POST' });
+    clearInterval(ticker);
     if (!res.ok) throw new Error('Could not generate drill set');
     const data = await res.json();
 
-    // Switch to active drill tab
-    switchTab('quiz');
+    if (fillEl) fillEl.style.width = '100%';
+    if (pctEl) pctEl.textContent = '100%';
+    if (textEl) textEl.textContent = 'Remediation Set Locked!';
+    await new Promise(r => setTimeout(r, 250));
 
-    // Load first question of the weak-spot set
-    const container = document.getElementById('quizContent');
     container.innerHTML = `
       <div class="quiz-card" style="text-align: center; padding: 40px 20px;">
         <div style="font-size: 36px; margin-bottom: 10px;">⚡</div>
@@ -53,6 +106,7 @@ async function startWeakSpotDrill() {
       </div>
     `;
   } catch (err) {
+    clearInterval(ticker);
     showToast('Failed to start Weak-Spot Drill: ' + err.message, 'error');
   }
 }
@@ -121,6 +175,10 @@ async function requestExplanationPerspective(perspective) {
       code_first: '💻 CODE-FIRST C# 13'
     };
 
+    const renderedBody = window.renderGothamMarkdown 
+      ? window.renderGothamMarkdown(data.explanation) 
+      : escapeHtml(data.explanation).replace(/```csharp([\s\S]*?)```/g, '<pre><code class="language-csharp">$1</code></pre>');
+
     box.innerHTML = `
       <div class="alternate-explain-box">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
@@ -128,7 +186,7 @@ async function requestExplanationPerspective(perspective) {
           <span style="font-family: var(--font-mono); font-size: 10px; color: var(--text-muted);">${data.is_cached ? '⚡ INSTANT CACHE' : '✨ VERIFIED'}</span>
         </div>
         <div style="font-size: 13.5px; line-height: 1.5; color: var(--text-primary); margin-bottom: 10px;">
-          ${escapeHtml(data.explanation).replace(/```csharp([\s\S]*?)```/g, '<pre><code class="language-csharp">$1</code></pre>')}
+          ${renderedBody}
         </div>
         <div style="display: flex; justify-content: flex-end; gap: 8px;">
           <button class="btn-secondary" style="font-size: 11px; padding: 4px 10px;" onclick="copyAltExplanation('${escapeHtml(data.explanation).replace(/'/g, "\\'")}')">📋 Copy</button>
@@ -137,7 +195,9 @@ async function requestExplanationPerspective(perspective) {
       </div>
     `;
 
-    box.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
+    box.querySelectorAll('pre code').forEach(el => {
+      if (window.hljs) hljs.highlightElement(el);
+    });
   } catch (err) {
     box.innerHTML = `<div style="color: var(--status-error); padding: 8px;">Failed to generate alternate perspective: ${err.message}</div>`;
   }

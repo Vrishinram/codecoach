@@ -474,12 +474,24 @@ function initSettingsForm() {
   });
 }
 
+async function registerCurrentDevice() {
+  if (typeof window.requestAndSubscribePush === 'function') {
+    showToast('Registering this device with Gotham Signal service...', 'info');
+    const ok = await window.requestAndSubscribePush(false);
+    if (ok) {
+      showToast('🦇 Device subscription confirmed! Ready for Web Push test.');
+    }
+  } else {
+    showToast('Push notifications not supported in this browser.', 'error');
+  }
+}
+
 async function sendTestPush() {
   try {
-    if ('Notification' in window && Notification.permission !== 'granted') {
-      showToast('Requesting browser notification permissions first...');
+    // Attempt silent subscription sync if browser already has permission
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
       if (typeof window.requestAndSubscribePush === 'function') {
-        await window.requestAndSubscribePush();
+        await window.requestAndSubscribePush(true);
       }
     }
 
@@ -489,8 +501,12 @@ async function sendTestPush() {
       throw new Error(data.detail || 'Failed to dispatch test push');
     }
     showToast(data.message);
-    if (data.web_push_delivered === 0 && 'Notification' in window && Notification.permission !== 'granted') {
-      showToast('Tip: Allow browser notifications or click the Gotham Bell to register this device.', 'error');
+    if (data.web_push_delivered === 0) {
+      if ('Notification' in window && Notification.permission === 'denied') {
+        showToast('Browser notifications are currently blocked. Click the lock icon in your address bar to allow alerts.', 'error');
+      } else {
+        showToast('Tip: Click "Register This Device" or allow notifications to receive alerts here.', 'info');
+      }
     }
   } catch (e) {
     showToast('Failed to trigger test push: ' + e.message, 'error');
@@ -499,13 +515,55 @@ async function sendTestPush() {
 
 async function sendTestEmail() {
   try {
+    showToast('Dispatching test transmission...', 'info');
     const res = await fetch('/api/email/test', { method: 'POST' });
     const data = await res.json();
     if (!res.ok) {
       throw new Error(data.detail || 'Failed to trigger test email');
     }
-    showToast(data.message);
+
+    if (data.status === 'simulated' && data.html_preview) {
+      openEmailPreviewModal(data);
+      showToast(data.message, 'info');
+    } else {
+      showToast(data.message, 'info');
+    }
   } catch (e) {
     showToast(e.message, 'error');
   }
 }
+
+function openEmailPreviewModal(data) {
+  const modal = document.getElementById('emailPreviewModal');
+  if (!modal) return;
+  const frame = document.getElementById('emailPreviewFrame');
+  if (frame && data.html_preview) {
+    frame.srcdoc = data.html_preview;
+  }
+  const badge = document.getElementById('emailPreviewBadge');
+  if (badge) {
+    badge.textContent = data.delivered ? 'LIVE DISPATCHED' : 'PREVIEW MODE';
+    badge.className = `badge ${data.delivered ? 'badge-completed' : 'badge-topic'}`;
+  }
+  const sub = document.getElementById('emailPreviewSubtitle');
+  if (sub) {
+    sub.textContent = `Destination: ${data.target_email || 'Configured address'}`;
+  }
+  const hint = document.getElementById('emailPreviewHint');
+  if (hint && data.hint) {
+    hint.innerHTML = `💡 <strong>Deployment Note:</strong> ${data.hint}`;
+  }
+  if (window.GothamMotion) window.GothamMotion.openModalAnimated(modal);
+  else modal.classList.add('active');
+}
+
+function closeEmailPreviewModal() {
+  const modal = document.getElementById('emailPreviewModal');
+  if (!modal) return;
+  if (window.GothamMotion) window.GothamMotion.closeModalAnimated(modal);
+  else modal.classList.remove('active');
+}
+
+window.registerCurrentDevice = registerCurrentDevice;
+window.openEmailPreviewModal = openEmailPreviewModal;
+window.closeEmailPreviewModal = closeEmailPreviewModal;

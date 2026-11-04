@@ -88,10 +88,12 @@ def test_api_test_email_clean_error_when_unconfigured(client: TestClient, monkey
     monkeypatch.setattr(settings, "SMTP_PASSWORD", "")
 
     res = client.post("/api/email/test")
-    # Must NOT be 500 internal server crash
-    assert res.status_code == 400
-    detail = res.json().get("detail", "")
-    assert "SMTP" in detail or "email" in detail.lower()
+    # Must NOT be 500 internal server crash, returns simulated preview payload
+    assert res.status_code == 200
+    data = res.json()
+    assert data["status"] == "simulated"
+    assert "html_preview" in data
+    assert "hint" in data
 
 def test_config_effective_app_url_and_storage_engine(monkeypatch):
     # Test effective_app_url on Vercel

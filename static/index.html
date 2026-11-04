@@ -665,10 +665,11 @@
                 </div>
               </div>
 
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="display: flex; gap: 10px;">
-                  <button type="button" class="btn-secondary" onclick="sendTestPush()">Test Push</button>
-                  <button type="button" class="btn-secondary" onclick="sendTestEmail()">Test Email</button>
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                  <button type="button" class="btn-secondary" onclick="registerCurrentDevice()">🔔 Register This Device</button>
+                  <button type="button" class="btn-secondary" onclick="sendTestPush()">⚡ Test Push</button>
+                  <button type="button" class="btn-secondary" onclick="sendTestEmail()">✉️ Test Email</button>
                 </div>
                 <button type="submit" class="btn-primary">Save Preferences</button>
               </div>
@@ -820,6 +821,33 @@
         </div>
         <button type="submit" class="btn-primary" style="margin-top: 8px;">Save Note &rarr;</button>
       </form>
+    </div>
+  </div>
+
+  <!-- 6. Email Template Preview Modal -->
+  <div class="modal-overlay" id="emailPreviewModal">
+    <div class="modal-content" style="max-width: 680px; width: 95%;">
+      <button class="modal-close" onclick="closeEmailPreviewModal()">&times;</button>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+        <span class="mono-step">[ NOTIFICATION TELEMETRY ]</span>
+        <span id="emailPreviewBadge" class="badge badge-topic">PREVIEW MODE</span>
+      </div>
+      <h2 class="modal-title">🦇 Gotham Email Transmission Preview</h2>
+      <p id="emailPreviewSubtitle" class="modal-subtitle" style="margin-bottom: 14px;">
+        Rendered celebration and reminder template for your configured address.
+      </p>
+
+      <div style="border: 1px solid var(--border-steel); border-radius: var(--radius-sm); overflow: hidden; background: #0b0d13; margin-bottom: 14px;">
+        <iframe id="emailPreviewFrame" style="width: 100%; height: 380px; border: none; background: #07080b;" title="Email Template Preview"></iframe>
+      </div>
+
+      <div id="emailPreviewHint" style="background: rgba(245, 197, 24, 0.08); border-left: 3px solid var(--accent-yellow); padding: 10px 14px; font-size: 12px; color: var(--text-secondary); margin-bottom: 14px;">
+        💡 <strong>Live Dispatch Notice:</strong> Live SMTP sending requires valid <code class="inline-code">SMTP_HOST</code> and <code class="inline-code">SMTP_PASSWORD</code> environment variables in Vercel.
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" class="btn-primary" onclick="closeEmailPreviewModal()">Close Preview</button>
+      </div>
     </div>
   </div>
 

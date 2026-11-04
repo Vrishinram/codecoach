@@ -38,22 +38,38 @@ async function startTopicTraining(topicId) {
   currentTopicId = topicId;
   const container = document.getElementById('quizContent');
 
-  const statusSteps = [
-    `Scanning Gotham C# syllabus for ${topicId}...`,
-    "Calibrating 25 active-recall questions...",
-    "Analyzing .NET 9 memory layout and compiler edge cases...",
-    "Configuring four-gate verification criteria...",
-    "Locking in question matrix..."
+  const statusCheckpoints = [
+    { target: 16, label: `Scanning syllabus and topic boundaries for ${topicId}...` },
+    { target: 34, label: "Analyzing .NET 9 type system and memory layout constraints..." },
+    { target: 52, label: "Synthesizing 25 discrimination-weighted active recall scenarios..." },
+    { target: 70, label: "Engineering high-yield distractors & real-world anti-patterns..." },
+    { target: 86, label: "Calibrating 4-gate verification criteria (MCQ 70%, Teach-Back, Lab)..." },
+    { target: 94, label: "Optimizing question matrix and finalizing payload..." }
   ];
-  let stepIdx = 0;
+
+  let currentPct = 6;
+  let cpIndex = 0;
 
   container.innerHTML = `
-    <div class="quiz-card" style="text-align: center; padding: 48px 20px;">
+    <div class="quiz-card" style="text-align: center; padding: 48px 24px;">
       <div class="loading-bat-spinner">🦇</div>
-      <h3 style="font-family: var(--font-display); font-size: 28px; color: var(--accent-yellow); margin-top: 14px; letter-spacing: 1px;">PREPARING GOTHAM DRILL</h3>
-      <p id="trainingLoadingStatusText" style="color: var(--text-secondary); font-size: 14px; margin: 12px 0 24px; min-height: 20px; font-family: var(--font-mono);">${statusSteps[0]}</p>
-      
-      <div style="display: flex; justify-content: center; gap: 12px;">
+      <h3 style="font-family: var(--font-display); font-size: 30px; color: var(--accent-yellow); margin-top: 14px; letter-spacing: 1px;">PREPARING GOTHAM DRILL</h3>
+      <p style="color: var(--text-muted); font-size: 13.5px; margin: 4px 0 16px;">Generating 25 verified C# / .NET 9 active-recall challenges</p>
+
+      <div class="drill-progress-container">
+        <div class="drill-progress-header">
+          <span class="drill-progress-title">Matrix Calibration</span>
+          <span id="drillProgressPercent" class="drill-progress-percent">6%</span>
+        </div>
+        <div class="drill-progress-track">
+          <div id="drillProgressBarFill" class="drill-progress-fill" style="width: 6%;"></div>
+        </div>
+        <div id="drillProgressCheckpoint" class="drill-progress-checkpoint">
+          ${statusCheckpoints[0].label}
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: center; gap: 12px; margin-top: 24px;">
         <button class="btn-secondary" onclick="cancelTrainingLoad()" style="font-size: 13px; padding: 8px 18px;">
           ✕ Cancel Drill
         </button>
@@ -61,15 +77,45 @@ async function startTopicTraining(topicId) {
     </div>
   `;
 
+  const fillEl = document.getElementById('drillProgressBarFill');
+  const pctEl = document.getElementById('drillProgressPercent');
+  const textEl = document.getElementById('drillProgressCheckpoint');
+
   if (trainingStatusInterval) clearInterval(trainingStatusInterval);
+  const startTime = Date.now();
+
   trainingStatusInterval = setInterval(() => {
-    stepIdx = (stepIdx + 1) % statusSteps.length;
-    const statusEl = document.getElementById('trainingLoadingStatusText');
-    if (statusEl) statusEl.textContent = statusSteps[stepIdx];
-  }, 2200);
+    const elapsedSec = (Date.now() - startTime) / 1000;
+
+    if (elapsedSec < 3) {
+      currentPct = Math.min(20, Math.floor(6 + elapsedSec * 5));
+      cpIndex = 0;
+    } else if (elapsedSec < 6) {
+      currentPct = Math.min(38, Math.floor(20 + (elapsedSec - 3) * 6));
+      cpIndex = 1;
+    } else if (elapsedSec < 10) {
+      currentPct = Math.min(58, Math.floor(38 + (elapsedSec - 6) * 5));
+      cpIndex = 2;
+    } else if (elapsedSec < 14) {
+      currentPct = Math.min(76, Math.floor(58 + (elapsedSec - 10) * 4.5));
+      cpIndex = 3;
+    } else if (elapsedSec < 18) {
+      currentPct = Math.min(90, Math.floor(76 + (elapsedSec - 14) * 3.5));
+      cpIndex = 4;
+    } else {
+      currentPct = Math.min(97, Math.floor(90 + Math.min(7, (elapsedSec - 18) * 0.5)));
+      cpIndex = 5;
+    }
+
+    if (fillEl) fillEl.style.width = `${currentPct}%`;
+    if (pctEl) pctEl.textContent = `${currentPct}%`;
+    if (textEl && statusCheckpoints[cpIndex]) {
+      textEl.textContent = statusCheckpoints[cpIndex].label;
+    }
+  }, 350);
 
   trainingAbortController = new AbortController();
-  const timeoutId = setTimeout(() => trainingAbortController.abort(), 18000);
+  const timeoutId = setTimeout(() => trainingAbortController.abort(), 50000);
 
   try {
     const res = await fetch(`/api/quiz/start/${topicId}`, { 
@@ -83,6 +129,12 @@ async function startTopicTraining(topicId) {
       const errData = await res.json().catch(() => ({}));
       throw new Error(errData.detail || `Server returned HTTP ${res.status}`);
     }
+
+    // Smooth leap to 100% on success
+    if (fillEl) fillEl.style.width = '100%';
+    if (pctEl) pctEl.textContent = '100%';
+    if (textEl) textEl.textContent = 'Matrix Locked! Launching Question 1...';
+    await new Promise(r => setTimeout(r, 260));
 
     const data = await res.json();
     currentSetId = data.set_id;
@@ -278,7 +330,7 @@ function displayAnswerFeedback(result, selectedBtn) {
     <div class="feedback-title">${result.is_correct ? '✅ VERIFIED: CORRECT' : '❌ INCORRECT SELECTION'}</div>
     <div class="feedback-explanation">
       <div style="margin-bottom: 6px;"><strong>EXPECTED:</strong> <code class="inline-code">${result.correct_answer}</code></div>
-      ${result.explanation}
+      ${window.renderGothamMarkdown ? window.renderGothamMarkdown(result.explanation) : result.explanation}
     </div>
 
     <!-- Smart Learning Actions: Multi-Perspective & Notes -->

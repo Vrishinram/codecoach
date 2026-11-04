@@ -265,48 +265,141 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
-async function requestAndSubscribePush() {
+async function requestAndSubscribePush(silent = false) {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    if (!silent) showToast('Push notifications not supported in this browser.', 'error');
+    return false;
+  }
   try {
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
-      showToast('Notifications denied in browser preferences.', 'error');
-      return;
+      if (!silent) showToast('Notifications denied in browser preferences.', 'error');
+      return false;
     }
 
     const keyResp = await fetch('/api/push/public-key');
     const { publicKey } = await keyResp.json();
     if (!publicKey) {
-      showToast('VAPID public key not configured.', 'error');
-      return;
+      if (!silent) showToast('VAPID public key not configured.', 'error');
+      return false;
     }
 
     const reg = await navigator.serviceWorker.ready;
-    const sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(publicKey)
-    });
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey)
+      });
+    }
 
     const subJson = sub.toJSON();
-    await fetch('/api/push/subscribe', {
+    const saveResp = await fetch('/api/push/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         endpoint: sub.endpoint,
         keys: {
-          p256dh: subJson.keys.p256dh,
-          auth: subJson.keys.auth
+          p256dh: (subJson.keys && subJson.keys.p256dh) || '',
+          auth: (subJson.keys && subJson.keys.auth) || ''
         },
         user_agent: navigator.userAgent
       })
     });
 
-    showToast('Gotham Signal alerts armed. Scheduled 8 AM / 8 PM verification checks active.');
-    if (window.GothamMotion) window.GothamMotion.swingNotificationBell(true);
+    if (saveResp.ok) {
+      if (!silent) showToast('🦇 Gotham Signal alerts armed on this device! 8 AM / 8 PM verification checks active.');
+      if (window.GothamMotion) window.GothamMotion.swingNotificationBell(true);
+      return true;
+    }
+    return false;
   } catch (err) {
-    showToast('Failed to register push: ' + err.message, 'error');
+    if (!silent) showToast('Failed to register push: ' + err.message, 'error');
+    return false;
   }
 }
 window.requestAndSubscribePush = requestAndSubscribePush;
+
+// Shared Gotham Markdown Renderer
+function renderGothamMarkdown(text) {
+  if (!text) return '';
+
+  if (window.marked && typeof window.marked.parse === 'function') {
+    try {
+      let html = window.marked.parse(text);
+      // Ensure all standard table elements get responsive wrapper and Gotham table class
+      html = html.replace(/<table(?!\s+class=)/g, '<table class="gotham-table"');
+      html = html.replace(/<table class="gotham-table">/g, '<div class="table-responsive-wrapper"><table class="gotham-table">');
+      html = html.replace(/<\/table>/g, '</table></div>');
+      return html;
+    } catch (e) {
+      console.warn('marked.js parse fallback:', e);
+    }
+  }
+
+  // Robust Fallback Parser
+  let escaped = escapeHtml(text);
+
+  // Markdown Tables: matches | col | col | or col | col with separator line
+  escaped = escaped.replace(/(?:^|\n)([^\n|]*\|[^\n]+\n\s*\|?[-:\s|]+\|?\s*\n(?:[^\n|]*\|[^\n]+(?:\n|$))+)/g, (match) => {
+    const rawLines = match.trim().split('\n');
+    if (rawLines.length < 2) return match;
+
+    const parseLine = (line) => {
+      let trimmed = line.trim();
+      if (trimmed.startsWith('|')) trimmed = trimmed.substring(1);
+      if (trimmed.endsWith('|')) trimmed = trimmed.substring(0, trimmed.length - 1);
+      return trimmed.split('|').map(c => c.trim());
+    };
+
+    const headerCells = parseLine(rawLines[0]);
+    const headers = headerCells.map(h => `<th>${h}</th>`).join('');
+
+    const bodyLines = rawLines.slice(2);
+    const rows = bodyLines.map(line => {
+      const cells = parseLine(line);
+      return `<tr>${cells.map(c => `<td>${c}</td>`).join('')}</tr>`;
+    }).join('');
+
+    return `\n<div class="table-responsive-wrapper"><table class="gotham-table"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table></div>\n`;
+  });
+
+  // Code blocks: ```csharp ... ```
+  escaped = escaped.replace(/```(csharp|cs|json|sql|bash|html)?\n([\s\S]*?)```/g, (match, lang, code) => {
+    const language = lang || 'csharp';
+    return `<div class="code-block-wrapper">
+      <div class="code-block-header">
+        <span class="code-lang-tag">${language.toUpperCase()}</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code class="language-${language}">${code.trim()}</code></pre>
+    </div>`;
+  });
+
+  // Inline code: `var x = 10;`
+  escaped = escaped.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
+
+  // Headings
+  escaped = escaped.replace(/^### (.*$)/gim, '<h3 class="gotham-heading-3">$1</h3>');
+  escaped = escaped.replace(/^## (.*$)/gim, '<h2 class="gotham-heading-2">$1</h2>');
+  escaped = escaped.replace(/^# (.*$)/gim, '<h1 class="gotham-heading-1">$1</h1>');
+
+  // Bold & Italic
+  escaped = escaped.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  escaped = escaped.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+  // Bullets
+  escaped = escaped.replace(/^\s*[-•*]\s+(.*$)/gim, '<div class="bullet-item"><span class="bat-bullet">🦇</span><span>$1</span></div>');
+
+  // Blockquotes
+  escaped = escaped.replace(/^\s*&gt;\s+(.*$)/gim, '<blockquote class="gotham-blockquote">$1</blockquote>');
+
+  // Paragraph breaks
+  escaped = escaped.replace(/\n\n/g, '<div class="paragraph-gap"></div>');
+
+  return escaped;
+}
+window.renderGothamMarkdown = renderGothamMarkdown;
 
 // Global Settings API
 async function loadGlobalSettings() {

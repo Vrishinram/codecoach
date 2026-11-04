@@ -38,11 +38,20 @@ function setupMarked() {
             <pre><code class="hljs language-${language}">${highlighted}</code></pre>
           </div>`;
         },
-        table(header, body) {
+        table(tokenOrHeader, body) {
+          let headerContent = '';
+          let bodyContent = '';
+          if (tokenOrHeader && typeof tokenOrHeader === 'object' && tokenOrHeader.header) {
+            headerContent = tokenOrHeader.header;
+            bodyContent = tokenOrHeader.rows ? tokenOrHeader.rows.map(r => `<tr>${r.map(c => `<td>${c.text || c}</td>`).join('')}</tr>`).join('') : '';
+          } else {
+            headerContent = tokenOrHeader || '';
+            bodyContent = body || '';
+          }
           return `<div class="table-responsive-wrapper">
             <table class="gotham-table">
-              <thead>${header}</thead>
-              <tbody>${body}</tbody>
+              <thead>${headerContent}</thead>
+              <tbody>${bodyContent}</tbody>
             </table>
           </div>`;
         }
@@ -370,6 +379,9 @@ function escapeHtml(str) {
 }
 
 function robustMarkdownFallback(text) {
+  if (typeof window.renderGothamMarkdown === 'function') {
+    return window.renderGothamMarkdown(text);
+  }
   let escaped = escapeHtml(text);
 
   // Parse GFM Tables: | Col1 | Col2 |

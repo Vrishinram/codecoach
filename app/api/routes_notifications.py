@@ -74,6 +74,8 @@ async def send_test_push(db: Session = Depends(get_db)):
 async def send_test_email(db: Session = Depends(get_db)):
     """
     Sends an immediate test HTML email to USER_EMAIL or custom configured email.
+    If SMTP credentials are unconfigured or live connection fails, returns
+    an interactive HTML preview payload so user can inspect rendered transmission.
     """
     profile = db.query(UserProfile).first()
     target_email = (profile.custom_email if profile and profile.custom_email else None) or settings.USER_EMAIL
@@ -84,31 +86,56 @@ async def send_test_email(db: Session = Depends(get_db)):
             detail="Destination email not configured. Please set your email in Preferences or define USER_EMAIL in your environment."
         )
 
-    if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
-        raise HTTPException(
-            status_code=400,
-            detail="SMTP server credentials not configured. Please configure SMTP_HOST, SMTP_USER, and SMTP_PASSWORD in your Vercel project environment."
-        )
+    from app.services.email_service import render_email_template
+    context = {
+        "celebration_title": "Notifications Connected!",
+        "celebration_message": f"Your email reminders from {settings.ASSISTANT_NAME} are active.",
+        "celebration_detail": f"You will receive daily C# training updates and weekly digests at {target_email}.",
+        "app_url": settings.effective_app_url
+    }
+    rendered_html = render_email_template(
+        "celebration.html",
+        {**context, "subject": f"{settings.ASSISTANT_NAME} Test Email - Notifications Active"}
+    )
 
+    # If SMTP credentials not provided, return clean simulated preview
+    if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
+        return {
+            "status": "simulated",
+            "delivered": False,
+            "target_email": target_email,
+            "smtp_configured": False,
+            "html_preview": rendered_html,
+            "message": f"Generated email preview for {target_email} (SMTP unconfigured).",
+            "hint": "To dispatch live emails, configure valid SMTP_HOST and SMTP_PASSWORD in your Vercel project environment variables."
+        }
+
+    # Attempt live SMTP delivery
     sent = send_html_email(
         db=db,
         to_email=target_email,
         subject=f"{settings.ASSISTANT_NAME} Test Email - Notifications Active",
         template_name="celebration.html",
-        context={
-            "celebration_title": "Notifications Connected!",
-            "celebration_message": f"Your email reminders from {settings.ASSISTANT_NAME} are active.",
-            "celebration_detail": f"You will receive daily C# training updates and weekly digests at {target_email}.",
-            "app_url": settings.effective_app_url
-        },
+        context=context,
         notification_type="test"
     )
 
     if not sent:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Failed to deliver email to {target_email}. Please check SMTP_HOST, SMTP_PORT, and SMTP_PASSWORD app-password credentials."
-        )
+        return {
+            "status": "simulated",
+            "delivered": False,
+            "target_email": target_email,
+            "smtp_configured": True,
+            "html_preview": rendered_html,
+            "message": f"Live SMTP connection failed for {target_email}. Generated interactive email preview.",
+            "hint": "Check SMTP_HOST, SMTP_PORT (e.g. 587 or 465), and SMTP_PASSWORD (e.g. Google 16-character App Password)."
+        }
 
-    return {"status": "success", "message": f"Test email sent successfully to {target_email}."}
+    return {
+        "status": "success",
+        "delivered": True,
+        "target_email": target_email,
+        "smtp_configured": True,
+        "message": f"Test email sent successfully to {target_email}."
+    }
 
