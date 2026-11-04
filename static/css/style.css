@@ -1743,3 +1743,334 @@ html, body {
   box-shadow: 0 0 10px var(--accent-yellow-glow);
 }
 
+/* ==========================================================================
+   PHASE 2: SMART LEARNING STYLES (GOTHAM NOIR)
+   ========================================================================== */
+
+/* 1. Concept Map Graph */
+.concept-map-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 600px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-steel);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+.concept-map-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  background: var(--bg-canvas);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.concept-map-legend {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.concept-map-svg-canvas {
+  width: 100%;
+  min-height: 540px;
+  display: block;
+}
+
+.concept-edge-path {
+  fill: none;
+  stroke: var(--border-highlight);
+  stroke-width: 2px;
+  stroke-dasharray: 4 4;
+  transition: stroke var(--transition-normal), stroke-width var(--transition-normal);
+}
+
+.concept-edge-path.active {
+  stroke: var(--accent-yellow);
+  stroke-width: 2.5px;
+  stroke-dasharray: none;
+  filter: drop-shadow(0 0 4px var(--accent-yellow-glow));
+}
+
+.concept-node-group {
+  cursor: pointer;
+  transition: transform var(--transition-normal);
+}
+
+.concept-node-group:hover {
+  transform: translateY(-2px);
+}
+
+.concept-node-rect {
+  fill: var(--bg-surface);
+  stroke: var(--border-steel);
+  stroke-width: 1.5px;
+  rx: 4px;
+  transition: stroke var(--transition-normal), fill var(--transition-normal);
+}
+
+.concept-node-group.status-mastered .concept-node-rect {
+  stroke: var(--status-success);
+  fill: rgba(34, 197, 94, 0.08);
+}
+
+.concept-node-group.status-reviewing .concept-node-rect {
+  stroke: var(--accent-yellow);
+  fill: rgba(245, 197, 24, 0.08);
+}
+
+.concept-node-group.status-learning .concept-node-rect {
+  stroke: var(--border-highlight);
+  fill: rgba(28, 32, 40, 0.9);
+}
+
+.concept-node-group.status-locked .concept-node-rect {
+  stroke: var(--border-subtle);
+  fill: #0c0e13;
+  opacity: 0.65;
+}
+
+.concept-node-text-title {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--text-primary);
+}
+
+.concept-node-text-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  fill: var(--text-muted);
+}
+
+/* 2. Concept Map Node Drawer / Popover */
+.concept-drawer {
+  position: absolute;
+  top: 0;
+  right: -420px;
+  width: 400px;
+  height: 100%;
+  background: var(--bg-surface);
+  border-left: 1px solid var(--accent-yellow);
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.7);
+  padding: var(--space-md);
+  z-index: 20;
+  transition: right var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.concept-drawer.open {
+  right: 0;
+}
+
+/* 3. 3D Spaced Repetition Flashcard Flipper */
+.flashcard-stage {
+  perspective: 1200px;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto 24px;
+}
+
+.flashcard-card {
+  position: relative;
+  width: 100%;
+  min-height: 280px;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+}
+
+.flashcard-card.flipped {
+  transform: rotateY(180deg);
+}
+
+.flashcard-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-steel);
+  border-radius: var(--radius-sm);
+  clip-path: var(--clip-angular-md);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.flashcard-back {
+  transform: rotateY(180deg);
+  border-color: var(--accent-yellow);
+  background: #11141b;
+}
+
+.flashcard-rating-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.btn-sm2-again {
+  background: rgba(225, 29, 72, 0.15);
+  border: 1px solid var(--status-error);
+  color: #ff4d6d;
+}
+.btn-sm2-again:hover {
+  background: var(--status-error);
+  color: #fff;
+}
+
+.btn-sm2-hard {
+  background: rgba(249, 115, 22, 0.15);
+  border: 1px solid #f97316;
+  color: #fb923c;
+}
+.btn-sm2-hard:hover {
+  background: #f97316;
+  color: #fff;
+}
+
+.btn-sm2-good {
+  background: var(--accent-yellow-dim);
+  border: 1px solid var(--accent-yellow);
+  color: var(--accent-yellow);
+}
+.btn-sm2-good:hover {
+  background: var(--accent-yellow);
+  color: #07080b;
+}
+
+.btn-sm2-easy {
+  background: var(--status-success-bg);
+  border: 1px solid var(--status-success);
+  color: var(--status-success);
+}
+.btn-sm2-easy:hover {
+  background: var(--status-success);
+  color: #07080b;
+}
+
+/* 4. Personal Notes Grid */
+.notes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.note-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-steel);
+  border-radius: var(--radius-xs);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.note-card:hover {
+  border-color: var(--accent-yellow);
+  transform: translateY(-2px);
+}
+
+/* 5. Study Plan Timeline */
+.studyplan-week-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-steel);
+  border-radius: var(--radius-xs);
+  padding: 20px;
+  margin-bottom: 16px;
+  transition: border-color var(--transition-normal);
+}
+
+.studyplan-week-card.current-active-week {
+  border-left: 4px solid var(--accent-yellow);
+  background: rgba(245, 197, 24, 0.03);
+}
+
+.studyplan-week-card.completed-week {
+  border-left: 4px solid var(--status-success);
+}
+
+.studyplan-progress-track {
+  height: 6px;
+  background: var(--bg-canvas);
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 10px 0 14px;
+}
+
+.studyplan-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-yellow), #ffe66d);
+  transition: width 0.4s ease;
+}
+
+/* 6. Explain Differently & Adaptive Badges */
+.adaptive-diff-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--radius-xs);
+  background: rgba(245, 197, 24, 0.1);
+  border: 1px solid var(--accent-yellow);
+  color: var(--accent-yellow);
+}
+
+.explain-dropdown-menu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-highlight);
+  border-radius: var(--radius-xs);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  z-index: 50;
+  min-width: 200px;
+  padding: 4px;
+}
+
+.explain-dropdown-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.explain-dropdown-item:hover {
+  background: var(--accent-yellow);
+  color: #07080b;
+}
+
+.alternate-explain-box {
+  background: var(--bg-canvas);
+  border: 1px solid var(--accent-yellow);
+  border-radius: var(--radius-xs);
+  padding: 14px;
+  margin-top: 12px;
+  animation: fadeIn 0.3s ease;
+}
+
+

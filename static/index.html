@@ -88,6 +88,9 @@
         <button class="nav-tab-btn active" data-tab="chat">💬 REPL Console</button>
         <button class="nav-tab-btn" data-tab="quiz">🎯 Active Drill</button>
         <button class="nav-tab-btn" data-tab="practice">🥋 Practice</button>
+        <button class="nav-tab-btn" data-tab="conceptmap">🧠 Concept Map</button>
+        <button class="nav-tab-btn" data-tab="flashcards">📝 Notes & Cards</button>
+        <button class="nav-tab-btn" data-tab="studyplan">📅 Study Plan</button>
         <button class="nav-tab-btn" data-tab="roadmap">🗺️ Curriculum</button>
         <button class="nav-tab-btn" data-tab="dashboard">📊 Telemetry</button>
         <button class="nav-tab-btn" data-tab="settings">⚙️ Preferences</button>
@@ -398,7 +401,85 @@
           </div>
         </section>
 
-        <!-- 4. ROADMAP / CURRICULUM VIEW -->
+        <!-- 4. CONCEPT MAP VIEW (PHASE 2) -->
+        <section class="view-section" id="view-conceptmap">
+          <div class="content-wrapper-standard">
+            <div class="view-header-deck" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <span class="mono-step">[ 03 // DEPENDENCY GRAPH ]</span>
+                <h2 class="view-title">Gotham C# & .NET 9 Concept Map</h2>
+                <p class="view-subtitle">Interactive visual topology mapping 22 core C# topics from syntax to ASP.NET Core and EF Core. Click any node to inspect mastery and launch active drills.</p>
+              </div>
+              <div style="display: flex; gap: 10px;">
+                <button class="btn-secondary" onclick="startWeakSpotDrill()">⚡ Weak-Spot Drill (10 Qs)</button>
+                <button class="btn-primary" onclick="loadConceptMap()">↻ Refresh Graph</button>
+              </div>
+            </div>
+
+            <div id="conceptMapContainer">
+              <!-- Rendered by smart_learning.js -->
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. PERSONAL NOTES & FLASHCARDS VIEW (PHASE 2) -->
+        <section class="view-section" id="view-flashcards">
+          <div class="content-wrapper-standard">
+            <div class="view-header-deck" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <span class="mono-step">[ 04 // ACTIVE RECALL ]</span>
+                <h2 class="view-title">Spaced Repetition Deck & Personal Notes</h2>
+                <p class="view-subtitle">SuperMemo SM-2 interval scheduler for permanent retention, plus zero-LLM flashcard generation from your missed quiz questions.</p>
+              </div>
+              <div style="display: flex; gap: 10px;">
+                <button class="btn-secondary" onclick="autoGenerateCardsFromMissed()">⚡ Make Cards from Missed Qs</button>
+                <button class="btn-primary" onclick="openCreateNoteModal()">+ New Personal Note</button>
+              </div>
+            </div>
+
+            <!-- Due Review Deck Hero -->
+            <div style="margin-bottom: 32px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h3 style="font-family: var(--font-display); font-size: 20px; color: var(--accent-yellow); margin: 0;">SM-2 Spaced Repetition Due Queue</h3>
+                <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);"><span id="flashcardDueCount">0</span> Cards Ready for Review</span>
+              </div>
+              <div id="flashcardDeckContainer">
+                <!-- Rendered by smart_learning.js -->
+              </div>
+            </div>
+
+            <!-- Personal Notes Grid -->
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <h3 style="font-family: var(--font-display); font-size: 20px; color: var(--text-primary); margin: 0;">Personal Notes & Architectural Snippets</h3>
+                <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">Saved from chat discussions and quiz explanations</span>
+              </div>
+              <div id="notesListContainer">
+                <!-- Rendered by smart_learning.js -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 6. STUDY PLAN GENERATOR & PROGRESS VIEW (PHASE 2) -->
+        <section class="view-section" id="view-studyplan">
+          <div class="content-wrapper-standard">
+            <div class="view-header-deck" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <span class="mono-step">[ 05 // SYLLABUS TIMELINE ]</span>
+                <h2 class="view-title">Goal-Driven Study Plan & Milestones</h2>
+                <p class="view-subtitle">Week-by-week curriculum roadmap mapped to your target career role, syncing live with topic verifications and feeding your daily reminder alerts.</p>
+              </div>
+              <button class="btn-secondary" onclick="renderStudyPlanCreator()">+ Change / Create Goal</button>
+            </div>
+
+            <div id="studyPlanContainer">
+              <!-- Rendered by smart_learning.js -->
+            </div>
+          </div>
+        </section>
+
+        <!-- 7. ROADMAP / CURRICULUM VIEW -->
         <section class="view-section" id="view-roadmap">
           <div class="content-wrapper-standard">
             <div class="roadmap-header-deck" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
@@ -569,6 +650,9 @@
       <button class="bottom-nav-btn active" data-tab="chat">💬 <span>REPL</span></button>
       <button class="bottom-nav-btn" data-tab="quiz">🎯 <span>Drill</span></button>
       <button class="bottom-nav-btn" data-tab="practice">🥋 <span>Lab</span></button>
+      <button class="bottom-nav-btn" data-tab="conceptmap">🧠 <span>Graph</span></button>
+      <button class="bottom-nav-btn" data-tab="flashcards">📝 <span>Cards</span></button>
+      <button class="bottom-nav-btn" data-tab="studyplan">📅 <span>Plan</span></button>
       <button class="bottom-nav-btn" data-tab="roadmap">🗺️ <span>Map</span></button>
       <button class="bottom-nav-btn" data-tab="dashboard">📊 <span>Stats</span></button>
       <button class="bottom-nav-btn" data-tab="settings">⚙️ <span>Config</span></button>
@@ -667,12 +751,51 @@
     </div>
   </div>
 
+  <!-- 5. Create Personal Note Modal (Phase 2) -->
+  <div class="modal-overlay" id="createNoteModal">
+    <div class="modal-content" style="max-width: 540px;">
+      <button class="modal-close" onclick="closeCreateNoteModal()">&times;</button>
+      <span class="mono-step">[ KNOWLEDGE REPOSITORY ]</span>
+      <h2 class="modal-title">New Personal Note</h2>
+      <form id="newNoteForm" onsubmit="submitCreateNote(event)" style="display: flex; flex-direction: column; gap: 14px; margin-top: 14px;">
+        <div>
+          <label style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Topic Association</label>
+          <select id="newNoteTopic" class="chat-input" style="width: 100%;">
+            <option value="variables-and-types">Variables & Data Types</option>
+            <option value="operators-and-expressions">Operators & Expressions</option>
+            <option value="conditions-and-branching">Conditions & Branching</option>
+            <option value="loops-and-iterations">Loops & Iterations</option>
+            <option value="methods-and-parameters">Methods & Parameters</option>
+            <option value="arrays-and-spans">Arrays & Strings</option>
+            <option value="classes-and-objects">Classes & Records</option>
+            <option value="generics-in-csharp">Generics</option>
+            <option value="collections-and-linq">Collections & LINQ</option>
+            <option value="async-await-and-tasks">Async / Await</option>
+            <option value="memory-spans-and-performance">Memory & Spans</option>
+            <option value="aspnet-core-web-api">ASP.NET Core Web API</option>
+            <option value="entity-framework-core">Entity Framework Core</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Note Title</label>
+          <input type="text" id="newNoteTitle" class="chat-input" placeholder="e.g. ReadOnlySpan vs Memory in Async Methods" required>
+        </div>
+        <div>
+          <label style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Content / Code Snippet</label>
+          <textarea id="newNoteContent" class="code-editor-area" style="min-height: 140px;" placeholder="Write your conceptual takeaways, architectural rules, or code snippets..." required></textarea>
+        </div>
+        <button type="submit" class="btn-primary" style="margin-top: 8px;">Save Note &rarr;</button>
+      </form>
+    </div>
+  </div>
+
   <!-- Frontend JS Scripts -->
   <script src="/static/js/motion.js"></script>
   <script src="/static/js/app.js"></script>
   <script src="/static/js/chat.js"></script>
   <script src="/static/js/quiz.js"></script>
   <script src="/static/js/practice.js"></script>
+  <script src="/static/js/smart_learning.js"></script>
   <script src="/static/js/dashboard.js"></script>
 </body>
 </html>

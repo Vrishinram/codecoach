@@ -113,6 +113,18 @@ function switchTab(tabName) {
     if (typeof switchPracticeSubMode === 'function') {
       switchPracticeSubMode('playground');
     }
+  } else if (tabName === 'conceptmap') {
+    if (typeof loadConceptMap === 'function') {
+      loadConceptMap();
+    }
+  } else if (tabName === 'flashcards') {
+    if (typeof loadFlashcardsView === 'function') {
+      loadFlashcardsView();
+    }
+  } else if (tabName === 'studyplan') {
+    if (typeof loadStudyPlanView === 'function') {
+      loadStudyPlanView();
+    }
   }
 }
 
@@ -191,7 +203,7 @@ function handleHashNavigation() {
     openAppChallengeModal(topicId);
   } else if (hash === '#retention') {
     switchTab('dashboard');
-  } else if (['#chat', '#quiz', '#practice', '#roadmap', '#dashboard', '#settings'].includes(hash)) {
+  } else if (['#chat', '#quiz', '#practice', '#conceptmap', '#flashcards', '#studyplan', '#roadmap', '#dashboard', '#settings'].includes(hash)) {
     switchTab(hash.replace('#', ''));
   }
 }

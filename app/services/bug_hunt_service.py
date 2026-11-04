@@ -205,3 +205,4 @@ def evaluate_bug_hunt_submission(scenario_id: str, selected_lines: List[int]) ->
         "missed_lines": sorted(list(missed)),
         "false_positives": sorted(list(false_positives))
     }
+

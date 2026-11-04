@@ -129,6 +129,7 @@ async function fetchNextQuestion() {
 
 function renderQuestion(q, totalQuestions = 25) {
   activeQuestion = q;
+  window._questionStartTime = Date.now();
   const container = document.getElementById('quizContent');
 
   let typeLabel = 'MULTIPLE CHOICE';
@@ -217,13 +218,16 @@ async function submitAnswer(userAnswer) {
     }
   });
 
+  const responseTimeMs = window._questionStartTime ? (Date.now() - window._questionStartTime) : 0;
+
   try {
     const res = await fetch('/api/quiz/submit-answer', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         question_id: activeQuestion.id,
-        user_answer: userAnswer
+        user_answer: userAnswer,
+        response_time_ms: responseTimeMs
       })
     });
     const result = await res.json();
@@ -276,9 +280,23 @@ function displayAnswerFeedback(result, selectedBtn) {
       <div style="margin-bottom: 6px;"><strong>EXPECTED:</strong> <code class="inline-code">${result.correct_answer}</code></div>
       ${result.explanation}
     </div>
-    <div style="margin-top: 14px; text-align: right;">
+
+    <!-- Smart Learning Actions: Multi-Perspective & Notes -->
+    <div class="feedback-actions" style="display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+      <div style="display: flex; gap: 8px; align-items: center; position: relative;">
+        <button class="btn-secondary" style="font-size: 12px; padding: 5px 12px;" onclick="toggleExplainMenu(event)">💡 Explain Differently ▾</button>
+        <div id="explainDropdownMenu" class="explain-dropdown-menu" style="display: none;">
+          <button class="explain-dropdown-item" onclick="requestExplanationPerspective('analogy')">🦇 Analogy (Gotham Metaphor)</button>
+          <button class="explain-dropdown-item" onclick="requestExplanationPerspective('simplified')">👶 Simplified (ELI5)</button>
+          <button class="explain-dropdown-item" onclick="requestExplanationPerspective('code_first')">💻 Code-First (C# 13)</button>
+        </div>
+        <button class="btn-secondary" style="font-size: 12px; padding: 5px 12px;" onclick="saveCurrentExplanationAsNote()">💾 Save Note</button>
+      </div>
+
       <button class="btn-primary" onclick="fetchNextQuestion()">Next Question &rarr;</button>
     </div>
+
+    <div id="alternateExplanationContainer" style="display: none;"></div>
   `;
 }
 

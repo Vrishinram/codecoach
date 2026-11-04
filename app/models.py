@@ -155,6 +155,7 @@ class QuestionAttempt(Base):
     is_correct = Column(Boolean, nullable=False)
     consecutive_correct = Column(Integer, default=0) # Must reach 2 to be retired from review
     needs_review = Column(Boolean, default=False)
+    response_time_ms = Column(Integer, default=0)
     attempted_at = Column(DateTime, default=utc_now)
 
     question = relationship("QuizQuestion", back_populates="attempts")
@@ -380,4 +381,87 @@ class OutputPredictorScenario(Base):
             return json.loads(self.options_json or "[]")
         except Exception:
             return []
+
+# ============================================================================
+# PHASE 2: SMART LEARNING MODELS
+# ============================================================================
+
+class PersonalNote(Base):
+    __tablename__ = "personal_notes"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_session_id = Column(String(100), nullable=True)
+    topic_id = Column(String(80), nullable=True)
+    title = Column(String(200), nullable=False)
+    content = Column(Text, nullable=False)
+    tags_json = Column(Text, default="[]")
+    created_at = Column(DateTime, default=utc_now)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
+
+    flashcards = relationship("Flashcard", back_populates="note", cascade="all, delete-orphan")
+
+    @property
+    def tags(self):
+        try:
+            return json.loads(self.tags_json or "[]")
+        except Exception:
+            return []
+
+class Flashcard(Base):
+    __tablename__ = "flashcards"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_session_id = Column(String(100), nullable=True)
+    note_id = Column(Integer, ForeignKey("personal_notes.id", ondelete="SET NULL"), nullable=True)
+    topic_id = Column(String(80), nullable=True)
+    subtopic = Column(String(120), nullable=True)
+    front = Column(Text, nullable=False)
+    back = Column(Text, nullable=False)
+    code_snippet = Column(Text, nullable=True)
+    source_type = Column(String(30), default="manual")  # "manual", "note", "missed_question"
+    
+    # SM-2 Spaced Repetition Parameters
+    interval_days = Column(Integer, default=1)
+    ease_factor = Column(Float, default=2.5)
+    repetitions = Column(Integer, default=0)
+    due_date = Column(DateTime, default=utc_now)
+    last_reviewed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=utc_now)
+
+    note = relationship("PersonalNote", back_populates="flashcards")
+
+class StudyPlan(Base):
+    __tablename__ = "study_plans"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_session_id = Column(String(100), nullable=True)
+    goal_title = Column(String(200), nullable=False)
+    target_role = Column(String(100), nullable=False, default="Junior .NET Developer")
+    duration_weeks = Column(Integer, default=8)
+    daily_minutes = Column(Integer, default=30)
+    start_date = Column(DateTime, default=utc_now)
+    target_date = Column(DateTime, nullable=True)
+    weeks_json = Column(Text, default="[]")
+    current_week = Column(Integer, default=1)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=utc_now)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
+
+    @property
+    def weeks(self):
+        try:
+            return json.loads(self.weeks_json or "[]")
+        except Exception:
+            return []
+
+class ExplanationCache(Base):
+    __tablename__ = "explanation_caches"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    cache_key = Column(String(128), unique=True, index=True, nullable=False)
+    concept = Column(String(255), nullable=False)
+    perspective = Column(String(30), nullable=False)  # "analogy", "simplified", "code_first"
+    explanation = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=utc_now)
+
 

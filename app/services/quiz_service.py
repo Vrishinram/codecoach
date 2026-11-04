@@ -159,7 +159,8 @@ def get_next_unanswered_question(db: Session, set_id: int) -> Optional[QuizQuest
 def evaluate_answer(
     db: Session,
     question_id: int,
-    user_answer: str
+    user_answer: str,
+    response_time_ms: int = 0
 ) -> Tuple[bool, QuestionAttempt, QuizQuestion]:
     """
     Evaluates a user's answer:
@@ -211,7 +212,8 @@ def evaluate_answer(
         user_answer=user_answer,
         is_correct=is_correct,
         consecutive_correct=consecutive,
-        needs_review=needs_review
+        needs_review=needs_review,
+        response_time_ms=response_time_ms
     )
     db.add(attempt)
     db.commit()

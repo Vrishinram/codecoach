@@ -271,3 +271,4 @@ async def submit_output_predictor_round(req: OutputPredictorSubmitRequest):
     answers_dicts = [a.model_dump() for a in req.answers]
     res = score_predictor_round(answers_dicts)
     return OutputPredictorSubmitResponse(**res)
+

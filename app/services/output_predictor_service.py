@@ -184,3 +184,4 @@ def score_predictor_round(answers: List[Dict[str, Any]]) -> Dict[str, Any]:
         "speed_bonus": total_score - (correct_count * 100),
         "results": results
     }
+

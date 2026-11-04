@@ -99,7 +99,9 @@ async def submit_question_answer(payload: AnswerSubmission, db: Session = Depend
     """
     Submits user answer to a question and returns immediate evaluation + explanation.
     """
-    is_correct, attempt, question = evaluate_answer(db, payload.question_id, payload.user_answer)
+    is_correct, attempt, question = evaluate_answer(
+        db, payload.question_id, payload.user_answer, payload.response_time_ms or 0
+    )
     return AnswerResult(
         question_id=question.id,
         is_correct=is_correct,

@@ -63,6 +63,7 @@ class QuestionDTO(BaseModel):
 class AnswerSubmission(BaseModel):
     question_id: int
     user_answer: str
+    response_time_ms: Optional[int] = 0
 
 class AnswerResult(BaseModel):
     question_id: int
@@ -358,5 +359,146 @@ class OutputPredictorSubmitResponse(BaseModel):
     streak_bonus: int
     speed_bonus: int
     results: List[OutputPredictorResultItem]
+
+# --- Phase 2: Smart Learning Schemas ---
+
+class SubtopicAdaptiveMetric(BaseModel):
+    subtopic: str
+    total_attempts: int
+    correct_attempts: int
+    accuracy_pct: float
+    avg_response_time_ms: int
+    recommended_difficulty: int
+    difficulty_label: str
+    readiness_status: str
+
+class AdaptiveMetricsResponse(BaseModel):
+    topic_id: Optional[str] = None
+    overall_recommended_difficulty: int
+    subtopics: List[SubtopicAdaptiveMetric]
+
+class WeakSpotSummary(BaseModel):
+    subtopic: str
+    topic_id: str
+    topic_title: str
+    miss_count: int
+    accuracy_pct: float
+
+class WeakSpotDrillResponse(BaseModel):
+    set_id: int
+    total_questions: int
+    targeted_subtopics: List[str]
+    message: str
+
+class ExplainDifferentlyRequest(BaseModel):
+    concept: str
+    current_explanation: str
+    perspective: str # "analogy", "simplified", "code_first"
+    context_code: Optional[str] = None
+
+class ExplainDifferentlyResponse(BaseModel):
+    concept: str
+    perspective: str
+    explanation: str
+    is_cached: bool = False
+
+class ConceptMapNode(BaseModel):
+    id: str
+    level_id: str
+    level_title: str
+    title: str
+    order: int
+    status: str
+    mastery_score: float
+    subtopics: List[str]
+    unlocked: bool
+    prerequisites: List[str]
+
+class ConceptMapEdge(BaseModel):
+    source: str
+    target: str
+    relationship_type: str = "prerequisite"
+
+class ConceptMapResponse(BaseModel):
+    nodes: List[ConceptMapNode]
+    edges: List[ConceptMapEdge]
+    total_nodes: int
+    mastered_nodes: int
+    learning_nodes: int
+    locked_nodes: int
+
+class PersonalNoteCreate(BaseModel):
+    title: str
+    content: str
+    topic_id: Optional[str] = None
+    tags: List[str] = []
+
+class PersonalNoteResponse(BaseModel):
+    id: int
+    title: str
+    content: str
+    topic_id: Optional[str] = None
+    tags: List[str] = []
+    created_at: str
+    updated_at: str
+
+class FlashcardResponse(BaseModel):
+    id: int
+    note_id: Optional[int] = None
+    topic_id: Optional[str] = None
+    subtopic: Optional[str] = None
+    front: str
+    back: str
+    code_snippet: Optional[str] = None
+    source_type: str
+    interval_days: int
+    ease_factor: float
+    repetitions: int
+    due_date: str
+    is_due: bool
+
+class FlashcardReviewRequest(BaseModel):
+    rating: int # 1: Again, 2: Hard, 3: Good, 4: Easy
+
+class FlashcardReviewResponse(BaseModel):
+    id: int
+    rating: int
+    new_interval_days: int
+    new_ease_factor: float
+    repetitions: int
+    next_due_date: str
+
+class FlashcardGenerateFromMissedResponse(BaseModel):
+    generated_count: int
+    flashcards: List[FlashcardResponse]
+
+class StudyPlanCreate(BaseModel):
+    goal_title: str
+    target_role: str = "Junior .NET Developer"
+    duration_weeks: int = 8
+    daily_minutes: int = 30
+
+class StudyPlanWeek(BaseModel):
+    week_number: int
+    title: str
+    topic_ids: List[str]
+    topic_titles: List[str]
+    goal_description: str
+    completed: bool
+    progress_pct: float
+
+class StudyPlanResponse(BaseModel):
+    id: int
+    goal_title: str
+    target_role: str
+    duration_weeks: int
+    daily_minutes: int
+    start_date: str
+    target_date: Optional[str] = None
+    current_week: int
+    is_active: bool
+    weeks: List[StudyPlanWeek]
+    overall_progress_pct: float
+
 
 

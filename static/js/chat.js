@@ -135,6 +135,12 @@ function handleIncomingChatMessage(msg) {
       if (window.GothamMotion) window.GothamMotion.pulseAssistantAvatar(tag, false);
 
       bubble.innerHTML = formatMarkdown(rawText);
+      const actRow = document.createElement('div');
+      actRow.className = 'bubble-actions';
+      actRow.style.cssText = 'display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end;';
+      actRow.innerHTML = `<button class="btn-secondary" style="font-size: 11px; padding: 2px 8px; opacity: 0.8;" onclick="saveChatAnswerAsNote(this)">💾 Save Note</button>`;
+      bubble.appendChild(actRow);
+
       highlightCodeBlocks(bubble);
       chatHistory.push({ sender: 'assistant', content: rawText });
       activeStreamBubble = null;
@@ -168,6 +174,15 @@ function renderMessageBubble(sender, content) {
   const bubble = document.createElement('div');
   bubble.className = 'message-bubble';
   bubble.innerHTML = formatMarkdown(content);
+
+  if (sender === 'assistant') {
+    const actRow = document.createElement('div');
+    actRow.className = 'bubble-actions';
+    actRow.style.cssText = 'display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end;';
+    actRow.innerHTML = `<button class="btn-secondary" style="font-size: 11px; padding: 2px 8px; opacity: 0.8;" onclick="saveChatAnswerAsNote(this)">💾 Save Note</button>`;
+    bubble.appendChild(actRow);
+  }
+
   highlightCodeBlocks(bubble);
 
   row.appendChild(speakerTag);
@@ -412,6 +427,19 @@ function highlightCodeBlocks(container) {
     container.querySelectorAll('pre code').forEach((block) => {
       hljs.highlightElement(block);
     });
+  }
+}
+
+function saveChatAnswerAsNote(btn) {
+  const bubble = btn.closest('.message-bubble');
+  const clone = bubble.cloneNode(true);
+  const actions = clone.querySelector('.bubble-actions');
+  if (actions) actions.remove();
+  const text = clone.innerText.trim();
+  if (typeof saveNoteDirectly === 'function') {
+    saveNoteDirectly("Chat Note: C# Insight", text, "variables-and-types");
+  } else {
+    showToast('Saved note to personal vault');
   }
 }
 

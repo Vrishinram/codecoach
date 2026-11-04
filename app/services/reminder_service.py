@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.models import (
     CurriculumTopic, TopicProgress, RetentionQuiz, UserProfile,
-    LearningLink, QuizSet, NotificationLog, utc_now
+    LearningLink, QuizSet, NotificationLog, StudyPlan, utc_now
 )
 from app.services.push_service import send_web_push, send_ntfy_push
 from app.services.email_service import send_html_email
@@ -108,9 +108,13 @@ async def trigger_daily_reminder(db: Session, forced: bool = False):
 
     streak = profile.current_streak if profile else 1
 
+    # Check for active study plan milestone to feed the reminder
+    active_plan = db.query(StudyPlan).filter(StudyPlan.is_active == True).order_by(StudyPlan.id.desc()).first()
+    plan_prefix = f"[{active_plan.goal_title} (Wk {active_plan.current_week})] " if active_plan else ""
+
     # 1. Send Web Push
     if not profile or profile.push_enabled:
-        push_body = f"Today: {topic_title} • {due_action}"
+        push_body = f"{plan_prefix}Today: {topic_title} • {due_action}"
         if due_retention_count > 0:
             push_body += f" ({due_retention_count} reviews due)"
         await send_web_push(
