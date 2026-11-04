@@ -352,3 +352,4 @@ async def deactivate_study_plan_endpoint(
     plan.is_active = False
     db.commit()
     return {"status": "deactivated", "plan_id": plan_id}
+

@@ -172,11 +172,13 @@ window.GothamMotion = (function() {
     const hasSeen = sessionStorage.getItem('gotham_intro_seen');
     if (hasSeen || prefersReducedMotion) {
       introEl.style.display = 'none';
+      animateAppEntry();
       return;
     }
 
     if (typeof gsap === 'undefined') {
       introEl.style.display = 'none';
+      animateAppEntry();
       return;
     }
 
@@ -186,8 +188,28 @@ window.GothamMotion = (function() {
     const introText = introEl.querySelector('.intro-tagline');
     const skipBtn = introEl.querySelector('#skipIntroBtn');
 
+    // Null-guard targets before building the timeline
+    if (!beam || !cloudTarget || !emblem || !introText) {
+      introEl.style.display = 'none';
+      animateAppEntry();
+      return;
+    }
+
     const tl = gsap.timeline({
       onComplete: () => dismissIntroLoader(introEl)
+    });
+
+    // Failsafe: never leave users on a black screen
+    const failsafe = setTimeout(() => {
+      if (introEl && introEl.style.display !== 'none') {
+        tl.kill();
+        dismissIntroLoader(introEl);
+      }
+    }, 5000);
+
+    tl.eventCallback('onComplete', () => {
+      clearTimeout(failsafe);
+      dismissIntroLoader(introEl);
     });
 
     // Animate Bat-Signal sweeping up from city horizon into Gotham storm clouds
@@ -207,15 +229,11 @@ window.GothamMotion = (function() {
         opacity: 0.9,
         ease: 'power2.out'
       }, '-=0.3')
-      // Emblem flicker effect on cloud
-      .to(emblem, {
-        duration: 0.15,
-        opacity: 0.4,
-        ease: 'rough'
-      })
-      .to(emblem, { duration: 0.08, opacity: 0.1 })
-      .to(emblem, { duration: 0.12, opacity: 0.85 })
-      .to(emblem, { duration: 0.06, opacity: 0.4 })
+      // Emblem flicker effect on cloud (works with core GSAP)
+      .to(emblem, { duration: 0.12, opacity: 0.35, ease: 'power1.inOut' })
+      .to(emblem, { duration: 0.08, opacity: 0.08, ease: 'none' })
+      .to(emblem, { duration: 0.1, opacity: 0.9, ease: 'none' })
+      .to(emblem, { duration: 0.06, opacity: 0.35, ease: 'none' })
       .to(emblem, {
         duration: 0.4,
         opacity: 1,
@@ -239,6 +257,7 @@ window.GothamMotion = (function() {
     // Skip handler
     if (skipBtn) {
       skipBtn.addEventListener('click', () => {
+        clearTimeout(failsafe);
         tl.kill();
         dismissIntroLoader(introEl);
       });
@@ -246,6 +265,7 @@ window.GothamMotion = (function() {
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && introEl.style.display !== 'none') {
+        clearTimeout(failsafe);
         tl.kill();
         dismissIntroLoader(introEl);
       }

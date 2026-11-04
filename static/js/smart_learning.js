@@ -805,3 +805,4 @@ async function resetStudyPlan(planId) {
     showToast('Error resetting plan: ' + err.message, 'error');
   }
 }
+
