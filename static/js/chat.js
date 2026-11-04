@@ -19,52 +19,49 @@ let socketConnectAttempts = 0;
 
 // Initialize Marked parser cleanly for Marked v12+
 function setupMarked() {
-  if (window.marked) {
-    try {
-      const customRenderer = {
-        code({ text, lang }) {
-          const language = (lang && hljs.getLanguage(lang)) ? lang : 'csharp';
-          let highlighted = '';
-          try {
-            highlighted = hljs.highlight(text, { language }).value;
-          } catch (e) {
-            highlighted = hljs.highlightAuto(text).value;
-          }
-          return `<div class="code-block-wrapper">
-            <div class="code-block-header">
-              <span class="code-lang-tag">${language.toUpperCase()}</span>
-              <button class="copy-btn" onclick="copyCode(this)" title="Copy Code">Copy</button>
-            </div>
-            <pre><code class="hljs language-${language}">${highlighted}</code></pre>
-          </div>`;
-        },
-        table(tokenOrHeader, body) {
-          let headerContent = '';
-          let bodyContent = '';
-          if (tokenOrHeader && typeof tokenOrHeader === 'object' && tokenOrHeader.header) {
-            headerContent = tokenOrHeader.header;
-            bodyContent = tokenOrHeader.rows ? tokenOrHeader.rows.map(r => `<tr>${r.map(c => `<td>${c.text || c}</td>`).join('')}</tr>`).join('') : '';
-          } else {
-            headerContent = tokenOrHeader || '';
-            bodyContent = body || '';
-          }
-          return `<div class="table-responsive-wrapper">
-            <table class="gotham-table">
-              <thead>${headerContent}</thead>
-              <tbody>${bodyContent}</tbody>
-            </table>
-          </div>`;
-        }
-      };
+  if (!window.marked) return;
 
-      marked.use({
-        renderer: customRenderer,
-        gfm: true,
-        breaks: true
-      });
-    } catch (e) {
-      console.warn('Marked.js custom setup note:', e);
-    }
+  try {
+    const renderer = {
+      // marked v12: code receives a token { text, lang, ... }
+      code({ text, lang }) {
+        const raw = text || '';
+        let language = (lang || '').trim().toLowerCase() || 'csharp';
+        if (language === 'cs' || language === 'c#') language = 'csharp';
+
+        let highlighted;
+        try {
+          if (window.hljs && hljs.getLanguage(language)) {
+            highlighted = hljs.highlight(raw, { language, ignoreIllegals: true }).value;
+          } else if (window.hljs) {
+            highlighted = hljs.highlightAuto(raw).value;
+          } else {
+            highlighted = escapeHtml(raw);
+          }
+        } catch (_) {
+          highlighted = escapeHtml(raw);
+        }
+
+        return (
+          `<div class="code-block-wrapper">` +
+          `<div class="code-block-header">` +
+          `<span class="code-lang-tag">${escapeHtml(language.toUpperCase())}</span>` +
+          `<button type="button" class="copy-btn" onclick="copyCode(this)" title="Copy Code">Copy</button>` +
+          `</div>` +
+          `<pre><code class="hljs language-${escapeHtml(language)}">${highlighted}</code></pre>` +
+          `</div>`
+        );
+      },
+    };
+
+    marked.use({
+      renderer,
+      gfm: true,
+      breaks: true,
+      pedantic: false,
+    });
+  } catch (e) {
+    console.warn('Marked.js setup failed; using defaults:', e);
   }
 }
 
@@ -333,16 +330,14 @@ function executeCommandAction(data) {
 function formatMarkdown(text) {
   if (!text) return '';
 
-  let cleanText = text;
+  let cleanText = String(text);
   let thoughtHtml = '';
 
-  // Extract <think>...</think> or <thought>...</thought> tags cleanly
+  // Extract model "thinking" blocks (do not show raw tags)
   const thinkMatch = cleanText.match(/<(think|thought)>([\s\S]*?)<\/\1>/i);
   if (thinkMatch) {
     const thoughtRaw = thinkMatch[2].trim();
     cleanText = cleanText.replace(thinkMatch[0], '').trim();
-
-    // Render reasoning in a collapsible Gotham Detective analysis drawer
     thoughtHtml = `
       <details class="gotham-thought-drawer">
         <summary>
@@ -350,32 +345,43 @@ function formatMarkdown(text) {
           <span class="thought-toggle-hint">[Inspect analysis]</span>
         </summary>
         <div class="thought-content">${escapeHtml(thoughtRaw)}</div>
-      </details>
-    `;
+      </details>`;
   }
-
-  // Also handle unclosed <think> during streaming
+  // Streaming unclosed think
   cleanText = cleanText.replace(/<(think|thought)>[\s\S]*$/i, '').trim();
 
-  // Primary: Use marked.js if available
+  // Soft-normalize broken pipe "tables" the model sometimes emits as one line
+  cleanText = normalizePseudoTables(cleanText);
+
   if (window.marked && typeof window.marked.parse === 'function') {
     try {
-      const parsedHtml = window.marked.parse(cleanText);
-      return thoughtHtml + parsedHtml;
+      let html = window.marked.parse(cleanText);
+      // Wrap tables for horizontal scroll (default GFM renderer output)
+      html = html.replace(
+        /<table>/g,
+        '<div class="table-responsive-wrapper"><table class="gotham-table">'
+      );
+      html = html.replace(/<\/table>/g, '</table></div>');
+      return thoughtHtml + html;
     } catch (err) {
-      console.warn('marked.js parse fallback triggered:', err);
+      console.warn('marked.js parse fallback triggered:', err && err.message ? err.message : err);
     }
   }
 
-  // Fallback: Comprehensive Markdown & Table Parser
   return thoughtHtml + robustMarkdownFallback(cleanText);
 }
 
+/** Fix single-line pipe soup into real GFM tables when possible */
+function normalizePseudoTables(md) {
+  return md;
+}
+
 function escapeHtml(str) {
-  return str
+  return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 function robustMarkdownFallback(text) {

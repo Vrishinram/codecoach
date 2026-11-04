@@ -468,6 +468,10 @@ function initSettingsForm() {
         await loadGlobalSettings();
       }
       showToast(data.message || 'System preferences committed and confirmed.');
+
+      if (payload.push_enabled && typeof window.requestAndSubscribePush === 'function') {
+        await window.requestAndSubscribePush(false);
+      }
     } catch (err) {
       showToast('Failed to commit preferences: ' + err.message, 'error');
     }
@@ -488,48 +492,73 @@ async function registerCurrentDevice() {
 
 async function sendTestPush() {
   try {
-    // Attempt silent subscription sync if browser already has permission
-    if ('serviceWorker' in navigator && 'PushManager' in window) {
-      if (typeof window.requestAndSubscribePush === 'function') {
-        await window.requestAndSubscribePush(true);
+    if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+      return showToast('This browser does not support Web Push. ntfy may still work.', 'error');
+    }
+
+    // Must be a user gesture path (button click) — good for iOS/Chrome
+    if (Notification.permission === 'denied') {
+      return showToast('Notifications are blocked. Allow them in the browser site settings.', 'error');
+    }
+
+    if (typeof window.requestAndSubscribePush === 'function') {
+      const ok = await window.requestAndSubscribePush(Notification.permission === 'granted');
+      if (!ok && Notification.permission !== 'granted') {
+        return; // requestAndSubscribePush already toasted
       }
     }
 
     const res = await fetch('/api/push/test', { method: 'POST' });
     const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.detail || 'Failed to dispatch test push');
-    }
-    showToast(data.message);
-    if (data.web_push_delivered === 0) {
-      if ('Notification' in window && Notification.permission === 'denied') {
-        showToast('Browser notifications are currently blocked. Click the lock icon in your address bar to allow alerts.', 'error');
-      } else {
-        showToast('Tip: Click "Register This Device" or allow notifications to receive alerts here.', 'info');
-      }
+    if (!res.ok) throw new Error(data.detail || data.message || 'Push test failed');
+
+    if ((data.web_push_delivered || 0) === 0) {
+      showToast(
+        (data.ntfy_delivered ? 'ntfy delivered. ' : '') +
+          'Web Push: 0 devices. Click the bell, Allow notifications, then Test Push again.',
+        'error'
+      );
+    } else {
+      showToast(data.message || `Web Push delivered to ${data.web_push_delivered} device(s).`);
     }
   } catch (e) {
-    showToast('Failed to trigger test push: ' + e.message, 'error');
+    showToast('Test push failed: ' + e.message, 'error');
   }
 }
 
 async function sendTestEmail() {
   try {
     showToast('Dispatching test transmission...', 'info');
-    const res = await fetch('/api/email/test', { method: 'POST' });
+
+    const customEmail =
+      document.getElementById('settingUserEmailInput')?.value.trim() || '';
+
+    const res = await fetch('/api/email/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(customEmail ? { to: customEmail } : {}),
+    });
     const data = await res.json();
+
     if (!res.ok) {
-      throw new Error(data.detail || 'Failed to trigger test email');
+      throw new Error(data.detail || data.message || 'Failed to send test email');
     }
 
-    if (data.status === 'simulated' && data.html_preview) {
-      openEmailPreviewModal(data);
-      showToast(data.message, 'info');
-    } else {
-      showToast(data.message, 'info');
+    if (data.status === 'simulated' || data.delivered === false) {
+      showToast(
+        data.message ||
+          'SMTP could not send. Showing preview. Fix SMTP_* and USER_EMAIL in Vercel env.',
+        'error'
+      );
+      if (data.html_preview && typeof openEmailPreviewModal === 'function') {
+        openEmailPreviewModal(data);
+      }
+      return;
     }
+
+    showToast(data.message || `Email sent to ${data.target_email || 'your inbox'}.`);
   } catch (e) {
-    showToast(e.message, 'error');
+    showToast('Test email failed: ' + e.message, 'error');
   }
 }
 

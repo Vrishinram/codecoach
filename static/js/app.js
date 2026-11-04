@@ -231,12 +231,14 @@ function updateStreakDisplay(days) {
 
 // Service Worker & Push Alerts
 async function initServiceWorker() {
-  if ('serviceWorker' in navigator) {
-    try {
-      await navigator.serviceWorker.register('/sw.js');
-    } catch (e) {
-      console.warn('Service Worker note:', e);
-    }
+  if (!('serviceWorker' in navigator)) return null;
+  try {
+    const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    await navigator.serviceWorker.ready;
+    return reg;
+  } catch (e) {
+    console.warn('SW register failed', e);
+    return null;
   }
 }
 
@@ -284,6 +286,7 @@ async function requestAndSubscribePush(silent = false) {
       return false;
     }
 
+    await initServiceWorker();
     const reg = await navigator.serviceWorker.ready;
     let sub = await reg.pushManager.getSubscription();
     if (!sub) {
