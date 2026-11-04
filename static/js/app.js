@@ -109,6 +109,10 @@ function switchTab(tabName) {
     loadRoadmap();
   } else if (tabName === 'settings') {
     loadSettingsView();
+  } else if (tabName === 'practice') {
+    if (typeof switchPracticeSubMode === 'function') {
+      switchPracticeSubMode('playground');
+    }
   }
 }
 
@@ -187,7 +191,7 @@ function handleHashNavigation() {
     openAppChallengeModal(topicId);
   } else if (hash === '#retention') {
     switchTab('dashboard');
-  } else if (['#chat', '#quiz', '#roadmap', '#dashboard', '#settings'].includes(hash)) {
+  } else if (['#chat', '#quiz', '#practice', '#roadmap', '#dashboard', '#settings'].includes(hash)) {
     switchTab(hash.replace('#', ''));
   }
 }

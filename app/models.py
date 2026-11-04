@@ -263,3 +263,121 @@ class UserProfile(Base):
     reminder_times = Column(String(50), default="08:00,20:00")
 
     updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
+
+# ============================================================================
+# PHASE 1: PRACTICE FEATURES MODELS
+# ============================================================================
+
+class PlaygroundSnippet(Base):
+    __tablename__ = "playground_snippets"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_session_id = Column(String(100), nullable=True)
+    title = Column(String(150), nullable=False, default="Untitled C# Snippet")
+    code = Column(Text, nullable=False)
+    csharp_version = Column(String(20), default="13.0")
+    created_at = Column(DateTime, default=utc_now)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
+
+class CodingChallenge(Base):
+    __tablename__ = "coding_challenges"
+
+    id = Column(String(80), primary_key=True)
+    title = Column(String(150), nullable=False)
+    difficulty = Column(String(20), default="Beginner")
+    topic_id = Column(String(80), nullable=False)
+    description = Column(Text, nullable=False)
+    starter_code = Column(Text, nullable=False)
+    test_cases_json = Column(Text, default="[]")
+    created_at = Column(DateTime, default=utc_now)
+
+    @property
+    def test_cases(self):
+        try:
+            return json.loads(self.test_cases_json or "[]")
+        except Exception:
+            return []
+
+class ChallengeSubmission(Base):
+    __tablename__ = "challenge_submissions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    challenge_id = Column(String(80), nullable=False)
+    user_session_id = Column(String(100), nullable=True)
+    code = Column(Text, nullable=False)
+    passed = Column(Boolean, default=False)
+    tests_passed = Column(Integer, default=0)
+    tests_total = Column(Integer, default=0)
+    execution_engine = Column(String(30), default="piston")
+    is_simulated = Column(Boolean, default=False)
+    stdout = Column(Text, nullable=True)
+    stderr = Column(Text, nullable=True)
+    feedback = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=utc_now)
+
+class BugHuntScenario(Base):
+    __tablename__ = "bug_hunt_scenarios"
+
+    id = Column(String(80), primary_key=True)
+    title = Column(String(150), nullable=False)
+    difficulty = Column(String(20), default="Beginner")
+    topic_id = Column(String(80), nullable=False)
+    description = Column(Text, nullable=False)
+    code_snippet = Column(Text, nullable=False)
+    buggy_lines_json = Column(Text, default="[]") # List[int]
+    explanations_json = Column(Text, default="{}") # Dict[str, Dict]
+    created_at = Column(DateTime, default=utc_now)
+
+    @property
+    def buggy_lines(self):
+        try:
+            return json.loads(self.buggy_lines_json or "[]")
+        except Exception:
+            return []
+
+    @property
+    def explanations(self):
+        try:
+            return json.loads(self.explanations_json or "{}")
+        except Exception:
+            return {}
+
+class RefactorScenario(Base):
+    __tablename__ = "refactor_scenarios"
+
+    id = Column(String(80), primary_key=True)
+    title = Column(String(150), nullable=False)
+    topic_id = Column(String(80), nullable=False)
+    description = Column(Text, nullable=False)
+    bad_code = Column(Text, nullable=False)
+    ideal_refactor = Column(Text, nullable=False)
+    rubric_json = Column(Text, default="{}")
+    created_at = Column(DateTime, default=utc_now)
+
+    @property
+    def rubric(self):
+        try:
+            return json.loads(self.rubric_json or "{}")
+        except Exception:
+            return {}
+
+class OutputPredictorScenario(Base):
+    __tablename__ = "output_predictor_scenarios"
+
+    id = Column(String(80), primary_key=True)
+    topic_id = Column(String(80), nullable=False)
+    title = Column(String(150), nullable=False)
+    code_snippet = Column(Text, nullable=False)
+    options_json = Column(Text, default="[]")
+    correct_output = Column(Text, nullable=False)
+    explanation = Column(Text, nullable=False)
+    difficulty = Column(Integer, default=1)
+    created_at = Column(DateTime, default=utc_now)
+
+    @property
+    def options(self):
+        try:
+            return json.loads(self.options_json or "[]")
+        except Exception:
+            return []
+

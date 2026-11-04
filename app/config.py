@@ -52,11 +52,16 @@ class Settings(BaseSettings):
 
     @property
     def effective_database_url(self) -> str:
-        # Vercel and AWS Lambda serverless functions have a read-only filesystem except /tmp
+        url = self.DATABASE_URL
+        # Normalize postgres:// to postgresql:// for SQLAlchemy compatibility
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql://", 1)
+
+        # Vercel and AWS Lambda serverless functions have a read-only filesystem except /tmp for local sqlite fallback
         if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
-            if self.DATABASE_URL == "sqlite:///./codecoach.db":
+            if url == "sqlite:///./codecoach.db":
                 return "sqlite:////tmp/codecoach.db"
-        return self.DATABASE_URL
+        return url
 
     model_config = SettingsConfigDict(
         env_file=".env",

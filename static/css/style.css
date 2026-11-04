@@ -1567,3 +1567,179 @@ html, body {
     animation: none !important;
   }
 }
+
+/* ==========================================================================
+   PHASE 1: PRACTICE ARENA STYLING (GOTHAM NOIR)
+   ========================================================================== */
+
+.practice-subtabs-deck {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  margin-bottom: var(--space-md);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.practice-subtab-btn {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-steel);
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  padding: 8px 16px;
+  border-radius: var(--radius-xs);
+  clip-path: var(--clip-angular-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.practice-subtab-btn:hover {
+  background-color: var(--bg-elevated);
+  border-color: var(--accent-yellow);
+  color: var(--text-primary);
+}
+
+.practice-subtab-btn.active {
+  background-color: var(--accent-yellow);
+  color: #07080b;
+  border-color: var(--accent-yellow);
+  font-weight: 700;
+  box-shadow: 0 0 14px var(--accent-yellow-glow);
+}
+
+.practice-mode-panel {
+  display: none;
+}
+
+.practice-mode-panel.active {
+  display: block;
+}
+
+/* CodeMirror Gotham Theme Overrides */
+.CodeMirror {
+  font-family: var(--font-mono) !important;
+  font-size: 13.5px !important;
+  line-height: 1.55 !important;
+  background-color: var(--bg-code) !important;
+  color: var(--text-primary) !important;
+}
+
+.CodeMirror-gutters {
+  background-color: var(--bg-canvas) !important;
+  border-right: 1px solid var(--border-steel) !important;
+}
+
+.CodeMirror-linenumber {
+  color: var(--text-dim) !important;
+}
+
+.CodeMirror-cursor {
+  border-left: 2px solid var(--accent-yellow) !important;
+}
+
+/* Terminal Execution Wells */
+.terminal-well {
+  background-color: var(--bg-code);
+  border: 1px solid var(--border-steel);
+  border-radius: var(--radius-xs);
+  padding: 12px 14px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-primary);
+  max-height: 220px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.terminal-well-stderr {
+  background-color: rgba(225, 29, 72, 0.08);
+  border: 1px solid rgba(225, 29, 72, 0.3);
+  border-radius: var(--radius-xs);
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: #f87171;
+  empty-cells: hide;
+}
+
+.terminal-well-stderr:empty {
+  display: none;
+}
+
+/* Bug Hunt Interactive Line Selector */
+.bug-hunt-code-container {
+  background-color: var(--bg-code);
+  border: 1px solid var(--border-steel);
+  border-radius: var(--radius-xs);
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.bug-hunt-line-row {
+  display: flex;
+  align-items: center;
+  padding: 2px 12px;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  user-select: none;
+}
+
+.bug-hunt-line-row:hover {
+  background-color: rgba(245, 197, 24, 0.08);
+}
+
+.bug-hunt-line-row.selected-target {
+  background-color: rgba(225, 29, 72, 0.18);
+  border-left: 3px solid var(--status-error);
+}
+
+.bug-hunt-line-num {
+  width: 38px;
+  color: var(--text-dim);
+  text-align: right;
+  padding-right: 14px;
+  flex-shrink: 0;
+}
+
+.bug-hunt-line-code {
+  flex: 1;
+  color: var(--text-primary);
+  white-space: pre;
+}
+
+.bug-hunt-target-flag {
+  opacity: 0;
+  margin-left: 8px;
+  font-size: 12px;
+  transition: opacity var(--transition-fast);
+}
+
+.bug-hunt-line-row.selected-target .bug-hunt-target-flag {
+  opacity: 1;
+}
+
+/* 60s Predictor Timer Badge */
+.predictor-timer-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--accent-yellow);
+  color: var(--accent-yellow);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: var(--radius-xs);
+  box-shadow: 0 0 10px var(--accent-yellow-glow);
+}
+

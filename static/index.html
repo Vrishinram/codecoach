@@ -26,6 +26,12 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 
+  <!-- CodeMirror for C# Code Playground & Practice Challenges -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/nord.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
@@ -81,6 +87,7 @@
       <nav class="nav-tabs desktop-nav" role="tablist">
         <button class="nav-tab-btn active" data-tab="chat">💬 REPL Console</button>
         <button class="nav-tab-btn" data-tab="quiz">🎯 Active Drill</button>
+        <button class="nav-tab-btn" data-tab="practice">🥋 Practice</button>
         <button class="nav-tab-btn" data-tab="roadmap">🗺️ Curriculum</button>
         <button class="nav-tab-btn" data-tab="dashboard">📊 Telemetry</button>
         <button class="nav-tab-btn" data-tab="settings">⚙️ Preferences</button>
@@ -191,7 +198,207 @@
           </div>
         </section>
 
-        <!-- 3. ROADMAP / CURRICULUM VIEW -->
+        <!-- 3. PRACTICE ARENA VIEW (PHASE 1) -->
+        <section class="view-section" id="view-practice">
+          <div class="content-wrapper-standard">
+            <div class="view-header-deck" style="margin-bottom: 20px;">
+              <span class="mono-step">[ 02 // PRACTICE ARENA ]</span>
+              <h2 class="view-title">Gotham C# & .NET 9 Training Ground</h2>
+              <p class="view-subtitle">Execute code in sandboxed environments, hunt down stealth compiler bugs, decode diagnostic traces, refactor architectures, and run timed output speed rounds.</p>
+            </div>
+
+            <!-- Practice Sub-Mode Navigation Tabs -->
+            <div class="practice-subtabs-deck">
+              <button class="practice-subtab-btn active" data-submode="playground">⚡ Playground & Challenges</button>
+              <button class="practice-subtab-btn" data-submode="bughunt">🐞 Bug Hunt</button>
+              <button class="practice-subtab-btn" data-submode="decoder">🛠️ Error Decoder</button>
+              <button class="practice-subtab-btn" data-submode="refactor">🔄 Refactor Challenge</button>
+              <button class="practice-subtab-btn" data-submode="predictor">⏱️ 60s Speed Predictor</button>
+            </div>
+
+            <!-- Panel 1: In-Browser C# Code Playground & Challenges -->
+            <div class="practice-mode-panel active" id="practice-panel-playground">
+              <div class="telemetry-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+                  <div>
+                    <h3 style="font-family: var(--font-display); font-size: 20px; color: var(--accent-yellow); margin: 0;">C# .NET 9 Sandboxed Playground</h3>
+                    <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">Compile & Run via Isolated Piston/Judge0 Sandbox</span>
+                  </div>
+                  <div style="display: flex; gap: 8px; align-items: center;">
+                    <label style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">Target Challenge:</label>
+                    <select id="playgroundChallengeSelect" class="chat-input" style="padding: 4px 8px; font-size: 13px;"></select>
+                  </div>
+                </div>
+
+                <div id="playgroundChallengeDescription" style="display: none; padding: 10px 14px; background: var(--bg-surface); border: 1px solid var(--border-steel); border-left: 3px solid var(--accent-yellow); border-radius: var(--radius-xs); margin-bottom: 12px; font-size: 13.5px;"></div>
+
+                <div class="code-editor-container" style="border: 1px solid var(--border-steel); border-radius: var(--radius-xs); overflow: hidden;">
+                  <textarea id="playgroundCodeEditor"></textarea>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; flex-wrap: wrap; gap: 10px;">
+                  <span id="playgroundExecutionMeta" style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">Ready to compile</span>
+                  <div style="display: flex; gap: 10px;">
+                    <button class="btn-secondary" id="runChallengeTestsBtn" style="display: none;" onclick="runActiveChallengeTests()">🧪 Run Test Matrix</button>
+                    <button class="btn-primary" id="runPlaygroundBtn" onclick="runPlaygroundCode()">▶ Execute C# Code</button>
+                  </div>
+                </div>
+
+                <!-- Simulation Notice Banner -->
+                <div id="playgroundWarningBanner" style="display: none; margin-top: 12px; padding: 10px 14px; background: rgba(245, 197, 24, 0.08); border: 1px solid var(--accent-yellow); color: var(--accent-yellow); font-family: var(--font-mono); font-size: 12px; border-radius: var(--radius-xs);"></div>
+
+                <!-- Challenge Test Results -->
+                <div id="challengeTestResultsContainer" style="display: none; margin-top: 16px;"></div>
+
+                <!-- Execution Terminal Output -->
+                <div style="margin-top: 18px;">
+                  <h4 style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">TERMINAL OUTPUT (STDOUT)</h4>
+                  <pre class="terminal-well"><code id="playgroundStdout">(Output will appear here after execution)</code></pre>
+                  <pre class="terminal-well-stderr" style="margin-top: 8px;"><code id="playgroundStderr"></code></pre>
+                </div>
+              </div>
+            </div>
+
+            <!-- Panel 2: Bug Hunt Mode -->
+            <div class="practice-mode-panel" id="practice-panel-bughunt">
+              <div class="telemetry-card">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px;">
+                  <div>
+                    <h3 id="bugHuntTitle" style="font-family: var(--font-display); font-size: 24px; color: var(--accent-yellow); margin: 0;">🐞 BUG HUNT</h3>
+                    <p id="bugHuntDescription" style="font-size: 14px; color: var(--text-secondary); margin: 4px 0 0;"></p>
+                  </div>
+                  <div style="display: flex; gap: 8px; align-items: center;">
+                    <span id="bugHuntDifficultyBadge" class="badge badge-topic">INTERMEDIATE</span>
+                    <span id="bugHuntBugsCountLabel" class="badge badge-type">Defects: ?</span>
+                  </div>
+                </div>
+
+                <div style="padding: 8px 12px; background: var(--bg-surface); border: 1px solid var(--border-steel); border-radius: var(--radius-xs); margin-bottom: 12px; font-family: var(--font-mono); font-size: 11.5px; color: var(--accent-yellow);">
+                  ⚔️ Tactical Objective: Click the specific line numbers containing bugs, then click "Eliminate Selected Targets".
+                </div>
+
+                <!-- Interactive Code Snippet with Clickable Lines -->
+                <div id="bugHuntCodeLines" class="bug-hunt-code-container">
+                  <!-- Lines injected by practice.js -->
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+                  <button class="btn-secondary" onclick="loadNextBugHuntScenario()">Next Bug Scenario &rarr;</button>
+                  <button class="btn-primary" id="submitBugHuntBtn" onclick="submitBugHuntInspection()">Eliminate Selected Targets</button>
+                </div>
+
+                <!-- Feedback & Zoro Explanations -->
+                <div id="bugHuntFeedbackDeck" style="display: none; margin-top: 18px;"></div>
+              </div>
+            </div>
+
+            <!-- Panel 3: Compiler Error Decoder -->
+            <div class="practice-mode-panel" id="practice-panel-decoder">
+              <div class="telemetry-card">
+                <h3 style="font-family: var(--font-display); font-size: 24px; color: var(--accent-yellow); margin-bottom: 6px;">🛠️ Compiler Error & Stack Trace Decoder</h3>
+                <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 14px;">Paste any C# compiler diagnostic (e.g. <code>CS1061</code>) or runtime exception stack trace to receive an immediate plain-language cause breakdown and concrete before/after code fix.</p>
+
+                <!-- Quick Test Error Chips -->
+                <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; align-items: center;">
+                  <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">Quick Presets:</span>
+                  <button type="button" class="slash-pill decoder-quick-chip" data-error-sample="CS1061: 'List<User>' does not contain a definition for 'Where' and no accessible extension method 'Where' accepting a first argument of type 'List<User>' could be found">CS1061 LINQ</button>
+                  <button type="button" class="slash-pill decoder-quick-chip" data-error-sample="CS4014: Because this call is not awaited, execution of the current method continues before the call is completed">CS4014 Async</button>
+                  <button type="button" class="slash-pill decoder-quick-chip" data-error-sample="System.NullReferenceException: Object reference not set to an instance of an object at MyApp.Services.PaymentService.Charge(String customerId)">NullReferenceException</button>
+                  <button type="button" class="slash-pill decoder-quick-chip" data-error-sample="CS0103: The name 'totalCount' does not exist in the current context">CS0103 Scope</button>
+                  <button type="button" class="slash-pill decoder-quick-chip" data-error-sample="CS8602: Dereference of a possibly null reference.">CS8602 Nullability</button>
+                </div>
+
+                <textarea id="compilerErrorInput" class="code-editor-area" style="min-height: 120px;" placeholder="Paste compiler error message (e.g. error CS0103) or runtime stack trace here..."></textarea>
+
+                <div style="display: flex; justify-content: flex-end; margin-top: 12px;">
+                  <button class="btn-primary" id="decodeCompilerErrorBtn" onclick="submitCompilerDecode()">🛠️ Decode Diagnostic & Map Solution</button>
+                </div>
+
+                <!-- Decoder Result Deck -->
+                <div id="compilerDecodeResult" style="display: none; margin-top: 18px;"></div>
+              </div>
+            </div>
+
+            <!-- Panel 4: Refactor Challenge -->
+            <div class="practice-mode-panel" id="practice-panel-refactor">
+              <div class="telemetry-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                  <div>
+                    <h3 style="font-family: var(--font-display); font-size: 24px; color: var(--accent-yellow); margin: 0;">🔄 Architectural Refactor Challenge</h3>
+                    <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">Refactor messy working code to modern C# 13 idioms and clean architecture</span>
+                  </div>
+                  <div>
+                    <select id="refactorScenarioSelect" class="chat-input" style="padding: 4px 8px; font-size: 13px;"></select>
+                  </div>
+                </div>
+
+                <div id="refactorDescription" style="padding: 10px 14px; background: var(--bg-surface); border: 1px solid var(--border-steel); border-left: 3px solid var(--accent-yellow); border-radius: var(--radius-xs); margin-bottom: 14px; font-size: 13.5px;"></div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                  <div>
+                    <h4 style="font-family: var(--font-mono); font-size: 11px; color: var(--status-error); margin-bottom: 6px;">❌ ORIGINAL CODE (WORKING BUT DEFICIENT)</h4>
+                    <pre class="terminal-well" style="max-height: 320px; overflow-y: auto;"><code class="language-csharp" id="refactorBadCodeDisplay"></code></pre>
+                  </div>
+                  <div>
+                    <h4 style="font-family: var(--font-mono); font-size: 11px; color: var(--status-success); margin-bottom: 6px;">✅ YOUR REFACTORED SOLUTION (C# 13)</h4>
+                    <div style="border: 1px solid var(--border-steel); border-radius: var(--radius-xs); overflow: hidden;">
+                      <textarea id="refactorCodeEditor"></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; margin-top: 14px;">
+                  <button class="btn-primary" id="submitRefactorBtn" onclick="submitRefactorChallenge()">Submit Refactoring for Architectural Rubric</button>
+                </div>
+
+                <!-- Rubric Evaluation Results -->
+                <div id="refactorFeedbackContainer" style="display: none; margin-top: 18px;"></div>
+              </div>
+            </div>
+
+            <!-- Panel 5: 60-Second Output Predictor Speed Rounds -->
+            <div class="practice-mode-panel" id="practice-panel-predictor">
+              <div class="telemetry-card" style="text-align: center; padding: var(--space-xl) var(--space-md);">
+                
+                <!-- Welcome Deck -->
+                <div id="predictorWelcomeDeck">
+                  <div style="font-size: 48px; margin-bottom: 12px;">⏱️</div>
+                  <h3 style="font-family: var(--font-display); font-size: 32px; color: var(--accent-yellow); margin-bottom: 8px;">60-SECOND OUTPUT PREDICTOR</h3>
+                  <p style="font-size: 15px; color: var(--text-secondary); max-width: 540px; margin: 0 auto 20px; line-height: 1.5;">
+                    Test your mastery of C# runtime edge cases: string immutability, deferred LINQ execution, struct copy semantics, and null-coalescing operations.
+                    Answer before the clock expires to earn streak multipliers and speed bonuses.
+                  </p>
+                  <button class="btn-primary" style="font-size: 18px; padding: 12px 32px;" onclick="startOutputPredictorSpeedRound()">⚡ Launch Speed Round (60s)</button>
+                </div>
+
+                <!-- Active Speed Round Deck -->
+                <div id="predictorActiveRoundDeck" style="display: none; max-width: 680px; margin: 0 auto; text-align: left;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                    <span id="predictorQuestionCounter" style="font-family: var(--font-mono); font-size: 12px; color: var(--text-muted);">Question 1 of 5</span>
+                    <div class="predictor-timer-badge">
+                      <span>⏳</span> <strong id="predictorTimerClock">60s</strong>
+                    </div>
+                  </div>
+
+                  <div style="font-family: var(--font-display); font-size: 20px; color: var(--text-primary); margin-bottom: 8px;">What will this C# code output?</div>
+
+                  <pre class="terminal-well" style="margin-bottom: 16px;"><code class="language-csharp" id="predictorQuestionSnippet"></code></pre>
+
+                  <div class="options-grid" id="predictorOptionsGrid">
+                    <!-- Option buttons injected by practice.js -->
+                  </div>
+                </div>
+
+                <!-- Result Deck -->
+                <div id="predictorResultDeck" style="display: none;"></div>
+
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- 4. ROADMAP / CURRICULUM VIEW -->
         <section class="view-section" id="view-roadmap">
           <div class="content-wrapper-standard">
             <div class="roadmap-header-deck" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
@@ -361,6 +568,7 @@
     <nav class="mobile-bottom-nav">
       <button class="bottom-nav-btn active" data-tab="chat">💬 <span>REPL</span></button>
       <button class="bottom-nav-btn" data-tab="quiz">🎯 <span>Drill</span></button>
+      <button class="bottom-nav-btn" data-tab="practice">🥋 <span>Lab</span></button>
       <button class="bottom-nav-btn" data-tab="roadmap">🗺️ <span>Map</span></button>
       <button class="bottom-nav-btn" data-tab="dashboard">📊 <span>Stats</span></button>
       <button class="bottom-nav-btn" data-tab="settings">⚙️ <span>Config</span></button>
@@ -464,6 +672,7 @@
   <script src="/static/js/app.js"></script>
   <script src="/static/js/chat.js"></script>
   <script src="/static/js/quiz.js"></script>
+  <script src="/static/js/practice.js"></script>
   <script src="/static/js/dashboard.js"></script>
 </body>
 </html>

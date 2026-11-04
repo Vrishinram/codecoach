@@ -205,3 +205,158 @@ class PlacementResult(BaseModel):
     unlocked_topics: List[str]
     message: str
 
+# --- Phase 1: Practice Features Schemas ---
+class CodeExecutionRequest(BaseModel):
+    code: str
+    stdin: Optional[str] = ""
+    timeout_seconds: Optional[int] = 5
+
+class CodeExecutionResponse(BaseModel):
+    stdout: str
+    stderr: str
+    exit_code: int
+    execution_time_ms: float
+    engine: str # "piston", "judge0", "llm_simulated"
+    is_simulated: bool = False
+    warning: Optional[str] = None
+
+class ChallengeTestCase(BaseModel):
+    input: str
+    expected_output: str
+    is_hidden: bool = False
+
+class CodingChallengeDTO(BaseModel):
+    id: str
+    title: str
+    difficulty: str
+    topic_id: str
+    description: str
+    starter_code: str
+    public_test_cases: List[Dict[str, Any]] = []
+
+class ChallengeTestResult(BaseModel):
+    test_index: int
+    input: str
+    expected_output: str
+    actual_output: str
+    passed: bool
+    is_hidden: bool = False
+    error: Optional[str] = None
+
+class ChallengeSubmitRequest(BaseModel):
+    code: str
+
+class ChallengeSubmitResponse(BaseModel):
+    challenge_id: str
+    passed: bool
+    tests_passed: int
+    tests_total: int
+    test_results: List[ChallengeTestResult]
+    execution_engine: str
+    is_simulated: bool
+    feedback: str
+
+class BugHuntScenarioDTO(BaseModel):
+    id: str
+    title: str
+    difficulty: str
+    topic_id: str
+    description: str
+    code_snippet: str
+    total_bugs: int
+
+class BugHuntSubmitRequest(BaseModel):
+    selected_lines: List[int] # 1-based line numbers
+
+class BugDetail(BaseModel):
+    line: int
+    bug_type: str
+    explanation: str
+    fix_code: str
+
+class BugHuntSubmitResponse(BaseModel):
+    scenario_id: str
+    score: float
+    found_count: int
+    total_bugs: int
+    all_found: bool
+    feedback: str
+    detected_bugs: List[BugDetail] = []
+    missed_lines: List[int] = []
+    false_positives: List[int] = []
+
+class CompilerDecodeRequest(BaseModel):
+    error_text: str
+
+class CompilerDecodeResponse(BaseModel):
+    error_code: Optional[str] = None
+    error_title: str
+    plain_explanation: str
+    likely_causes: List[str]
+    recommended_fix: str
+    code_example_before: Optional[str] = None
+    code_example_after: Optional[str] = None
+    related_topic_id: Optional[str] = None
+    related_topic_title: Optional[str] = None
+    is_ai_fallback: bool = False
+
+class RefactorScenarioDTO(BaseModel):
+    id: str
+    title: str
+    topic_id: str
+    description: str
+    bad_code: str
+
+class RefactorSubmitRequest(BaseModel):
+    refactored_code: str
+
+class RefactorGradeResponse(BaseModel):
+    score: float
+    passed: bool
+    readability_score: float
+    idiom_score: float
+    correctness_score: float
+    performance_score: float
+    feedback: str
+    strengths: List[str]
+    improvements: List[str]
+    ideal_comparison: str
+
+class OutputPredictorQuestion(BaseModel):
+    id: str
+    topic_id: str
+    title: str
+    code_snippet: str
+    options: List[str]
+
+class OutputPredictorRoundResponse(BaseModel):
+    round_id: str
+    time_limit_seconds: int = 60
+    questions: List[OutputPredictorQuestion]
+
+class OutputPredictorAnswer(BaseModel):
+    question_id: str
+    selected_option: str
+    time_spent_seconds: float
+
+class OutputPredictorSubmitRequest(BaseModel):
+    round_id: str
+    answers: List[OutputPredictorAnswer]
+
+class OutputPredictorResultItem(BaseModel):
+    question_id: str
+    user_answer: str
+    correct_output: str
+    is_correct: bool
+    explanation: str
+
+class OutputPredictorSubmitResponse(BaseModel):
+    total_score: int
+    correct_count: int
+    total_questions: int
+    max_streak: int
+    streak_bonus: int
+    speed_bonus: int
+    results: List[OutputPredictorResultItem]
+
+

@@ -23,6 +23,8 @@ from app.api.routes_quiz import router as quiz_router
 from app.api.routes_progress import router as progress_router
 from app.api.routes_notifications import router as notifications_router
 from app.api.routes_settings import router as settings_router
+from app.api.routes_practice import router as practice_router
+from app.migrations.runner import run_migrations
 
 # Configure logging
 logging.basicConfig(
@@ -57,8 +59,12 @@ def check_optional_auth(credentials: HTTPBasicCredentials = Depends(security)):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 1. Create database schema
-    logger.info("Initializing database tables...")
+    # 1. Run migrations and create database schema
+    logger.info("Running database schema migrations...")
+    try:
+        run_migrations()
+    except Exception as me:
+        logger.warning("Migration runner note: %s. Ensuring metadata tables...", me)
     Base.metadata.create_all(bind=engine)
 
     # 2. Seed curriculum and curated links
@@ -125,6 +131,7 @@ app.include_router(quiz_router, dependencies=[Depends(check_optional_auth)])
 app.include_router(progress_router, dependencies=[Depends(check_optional_auth)])
 app.include_router(notifications_router, dependencies=[Depends(check_optional_auth)])
 app.include_router(settings_router, dependencies=[Depends(check_optional_auth)])
+app.include_router(practice_router, dependencies=[Depends(check_optional_auth)])
 
 # WebSocket Chat endpoint with rate limit consideration
 @app.websocket("/ws/chat")
