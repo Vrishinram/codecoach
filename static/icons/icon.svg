@@ -1,21 +1,78 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0284c7"/>
-      <stop offset="100%" stop-color="#2563eb"/>
+    <!-- Gotham Signal Yellow Glow -->
+    <radialGradient id="batGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f5c518" stop-opacity="0.35"/>
+      <stop offset="60%" stop-color="#f5c518" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#07080b" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Signal Yellow Metallic Gradient -->
+    <linearGradient id="goldSheen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffe66d"/>
+      <stop offset="45%" stop-color="#f5c518"/>
+      <stop offset="100%" stop-color="#b48806"/>
     </linearGradient>
-    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#0284c7" flood-opacity="0.3"/>
+
+    <!-- Armor Plate Dark Gradient -->
+    <linearGradient id="armorPlate" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1c2028"/>
+      <stop offset="50%" stop-color="#12141a"/>
+      <stop offset="100%" stop-color="#07080b"/>
+    </linearGradient>
+
+    <!-- Drop Shadow Filter -->
+    <filter id="gothamGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#f5c518" flood-opacity="0.45"/>
     </filter>
   </defs>
-  <rect width="512" height="512" rx="128" fill="#0f172a"/>
-  <rect x="24" y="24" width="464" height="464" rx="104" fill="url(#grad)" opacity="0.15" stroke="#38bdf8" stroke-width="4"/>
-  <g filter="url(#shadow)">
-    <!-- Stylized C# Hexagon / Terminal Shield -->
-    <path d="M 256 100 L 390 176 L 390 336 L 256 412 L 122 336 L 122 176 Z" fill="#1e293b" stroke="#38bdf8" stroke-width="12" stroke-linejoin="round"/>
-    <!-- Terminal prompt symbol >_ -->
-    <path d="M 195 210 L 245 256 L 195 302" fill="none" stroke="#38bdf8" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
-    <line x1="265" y1="302" x2="315" y2="302" stroke="#38bdf8" stroke-width="16" stroke-linecap="round"/>
-  </g>
-</svg>
 
+  <!-- Base Dark Canvas -->
+  <rect width="512" height="512" rx="36" fill="#07080b"/>
+
+  <!-- Subtle Radial Spotlight on Center -->
+  <circle cx="256" cy="256" r="230" fill="url(#batGlow)"/>
+
+  <!-- Angular Hexagonal Armor Crest Outer Rim -->
+  <polygon points="256,36 460,116 460,396 256,476 52,396 52,116" 
+           fill="url(#armorPlate)" 
+           stroke="#2d3340" 
+           stroke-width="5" 
+           stroke-linejoin="miter"/>
+
+  <!-- Inner Signal Accent Rim -->
+  <polygon points="256,54 442,126 442,386 256,458 70,386 70,126" 
+           fill="none" 
+           stroke="#f5c518" 
+           stroke-width="2.5" 
+           stroke-opacity="0.85"/>
+
+  <!-- Original Stylized Gotham Bat Silhouette -->
+  <!-- Symmetrical, razor-sharp nocturnal guardian motif -->
+  <g filter="url(#gothamGlow)">
+    <path d="M 256 168
+             L 267 194
+             L 288 198
+             Q 340 196 405 160
+             L 426 182
+             Q 408 232 376 270
+             Q 344 246 312 254
+             Q 288 288 274 330
+             L 256 362
+             L 238 330
+             Q 224 288 200 254
+             Q 168 246 136 270
+             Q 104 232 86 182
+             L 107 160
+             Q 172 196 224 198
+             L 245 194
+             Z"
+          fill="url(#goldSheen)" 
+          stroke="#ffe66d" 
+          stroke-width="2"/>
+  </g>
+
+  <!-- Central C# & Terminal Precision Notch (Angled code chevron embedded in chest) -->
+  <polygon points="256,228 272,254 256,278 240,254" fill="#07080b"/>
+  <circle cx="256" cy="254" r="3" fill="#f5c518"/>
+</svg>

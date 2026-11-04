@@ -1,12 +1,14 @@
 /**
- * Dashboard, Roadmap, Links & Settings Controller
+ * ============================================================================
+ * CodeCoach • Dashboard, Roadmap, Links & Settings Controller (Gotham Edition)
+ * ============================================================================
  */
 
 document.addEventListener('DOMContentLoaded', () => {
   initSettingsForm();
 });
 
-// --- Dashboard ---
+// --- Dashboard & Telemetry ---
 async function loadDashboardStats() {
   try {
     const res = await fetch('/api/dashboard/stats');
@@ -31,8 +33,11 @@ async function loadDashboardStats() {
     if (elReviewsDue) elReviewsDue.textContent = data.due_reviews_count;
     const elTokens = document.getElementById('statTokens');
     if (elTokens) elTokens.textContent = (data.total_tokens_used || 0).toLocaleString();
-    const elStreak = document.getElementById('streakCount');
-    if (elStreak) elStreak.textContent = data.current_streak;
+
+    // Sync streak across app header & badge
+    if (window.CodeCoach && window.CodeCoach.updateStreak) {
+      window.CodeCoach.updateStreak(data.current_streak || 0);
+    }
 
     // Segmented Mastery Progress Bar
     const bar = document.getElementById('masterySegmentedBar');
@@ -59,6 +64,11 @@ async function loadDashboardStats() {
 
     // Render Links
     loadAllLinks();
+
+    // Trigger Motion Telemetry Count-Ups
+    if (window.GothamMotion) {
+      window.GothamMotion.animateDashboardNumbers();
+    }
   } catch (err) {
     console.error('Error loading dashboard stats:', err);
   }
@@ -69,7 +79,7 @@ function renderScoreHistoryChart(history) {
   if (!chart) return;
 
   if (!history || !history.length) {
-    chart.innerHTML = '<div style="color: var(--text-muted); font-size: 13.5px; width: 100%; text-align: center; padding-top: 40px; font-family: var(--font-mono);">[ No completed sets yet. Complete your first 25-Q drill to visualize score telemetry ]</div>';
+    chart.innerHTML = '<div style="color: var(--text-muted); font-size: 13.5px; width: 100%; text-align: center; padding-top: 40px; font-family: var(--font-mono);">[ No drill telemetry recorded yet. Complete your first 25-Q set to plot score history ]</div>';
     return;
   }
 
@@ -77,13 +87,13 @@ function renderScoreHistoryChart(history) {
     const heightPercent = Math.max(12, Math.min(100, item.score));
     const isMastered = item.score >= 85;
     const isPassed = item.score >= 70;
-    const color = isMastered ? 'var(--status-success)' : (isPassed ? 'var(--accent-cyan)' : 'var(--status-error)');
+    const color = isMastered ? 'var(--status-success)' : (isPassed ? 'var(--accent-yellow)' : 'var(--status-error)');
 
     return `
       <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end;" title="${item.topic_title}: ${item.score}%">
         <span style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: ${color};">${item.score.toFixed(0)}%</span>
-        <div style="width: 100%; max-width: 32px; height: ${heightPercent}%; background: ${color}; border-radius: 2px 2px 0 0; transition: height 0.4s ease;"></div>
-        <span style="font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 46px;">${item.date}</span>
+        <div style="width: 100%; max-width: 34px; height: ${heightPercent}%; background: ${color}; border-radius: 2px 2px 0 0; box-shadow: 0 0 8px ${color}33; transition: height 0.4s ease;"></div>
+        <span style="font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 48px;">${item.date}</span>
       </div>
     `;
   }).join('');
@@ -95,28 +105,27 @@ function renderDueRetentionList(quizzes) {
 
   if (!quizzes || !quizzes.length) {
     container.innerHTML = `
-      <div style="padding: 18px 12px; text-align: left;">
-        <div style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">All Spaced Repetition Gates Clear</div>
-        <p style="font-size: 13px; color: var(--text-muted); margin: 0; line-height: 1.5;">No 1-day, 3-day, or 7-day retests currently scheduled. Complete a 25-question drill to activate a retention gate.</p>
+      <div style="padding: 16px 8px; text-align: left;">
+        <div style="font-size: 14px; font-weight: 600; color: var(--accent-yellow); margin-bottom: 4px; font-family: var(--font-display); letter-spacing: 0.5px;">ALL GOTHAM GATES CLEAR</div>
+        <p style="font-size: 13px; color: var(--text-muted); margin: 0; line-height: 1.5;">No 1-day, 3-day, or 7-day retests due. Complete a 25-question drill to activate a retention gate.</p>
       </div>
     `;
     return;
   }
 
   container.innerHTML = quizzes.map(q => `
-    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); margin-bottom: 8px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: var(--bg-surface); border: 1px solid var(--border-steel); border-left: 3px solid var(--accent-yellow); border-radius: var(--radius-xs); margin-bottom: 8px;">
       <div>
-        <div style="font-weight: 600; font-size: 14px; color: var(--text-primary); font-family: var(--font-ui);">${q.topic_title}</div>
-        <div style="font-size: 12px; color: var(--status-warning); font-family: var(--font-mono); margin-top: 2px;">Stage ${q.stage}/3 Gate Due • 5 Questions</div>
+        <div style="font-weight: 600; font-size: 14px; color: var(--text-primary); font-family: var(--font-body);">${q.topic_title}</div>
+        <div style="font-size: 12px; color: var(--accent-yellow); font-family: var(--font-mono); margin-top: 2px;">Stage ${q.stage}/3 Retest Due • 5 Questions</div>
       </div>
-      <button class="btn-primary" style="font-size: 12.5px; padding: 6px 14px; flex-shrink: 0;" onclick="takeRetentionQuiz(${q.id}, '${q.topic_id}')">Take 5-Q Quiz &rarr;</button>
+      <button class="btn-primary" style="font-size: 12.5px; padding: 6px 14px; flex-shrink: 0;" onclick="takeRetentionQuiz(${q.id}, '${q.topic_id}')">Take Retest &rarr;</button>
     </div>
   `).join('');
 }
 
 async function takeRetentionQuiz(retentionId, topicId) {
-  // Simple prompt-based or inline 5-question quick check
-  const scoreInput = prompt(`Retention Quiz for ${topicId} (Stage Check):\nEnter your score (0 to 100):`, "85");
+  const scoreInput = prompt(`Gotham Spaced Retest for ${topicId}:\nEnter your score (0 to 100):`, "85");
   if (scoreInput !== null) {
     const score = parseFloat(scoreInput) || 0;
     try {
@@ -129,15 +138,16 @@ async function takeRetentionQuiz(retentionId, topicId) {
       showToast(data.message);
       loadDashboardStats();
     } catch (e) {
-      showToast('Error recording retention quiz: ' + e.message, 'error');
+      showToast('Error recording retention test: ' + e.message, 'error');
     }
   }
 }
 
-// --- Roadmap View ---
+// --- Roadmap: "Gotham Map" Node Layout ---
 async function loadRoadmap() {
   const container = document.getElementById('roadmapLevels');
-  container.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 40px;">Loading curriculum roadmap...</div>';
+  if (!container) return;
+  container.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 48px; font-family: var(--font-mono);">[ Surveying Gotham Curriculum Grid... ]</div>';
 
   try {
     const res = await fetch('/api/curriculum');
@@ -157,26 +167,39 @@ async function loadRoadmap() {
       });
     }
 
-    container.innerHTML = levels.map(lvl => `
-      <div class="level-block">
+    container.innerHTML = levels.map((lvl, lIdx) => `
+      <div class="level-block gotham-zone-block">
         <div class="level-title">
-          <span>📚 ${lvl.title}</span>
-          <span style="font-size: 12px; font-weight: 500; color: var(--text-dim);">${lvl.description || ''}</span>
+          <span>ZONE ${lIdx + 1} // ${lvl.title.toUpperCase()}</span>
+          <span style="font-size: 12px; font-weight: 500; color: var(--text-dim); font-family: var(--font-body);">${lvl.description || ''}</span>
         </div>
-        <div class="topic-list">
+        <div class="topic-list gotham-node-grid">
           ${lvl.topics.map(t => {
             const isLocked = !t.unlocked;
+            const isMastered = t.status === 'Mastered';
+            const statusClass = t.status.toLowerCase();
+
+            let badgeHtml = '';
+            if (isMastered) {
+              badgeHtml = '<span class="status-badge mastered">🦇 MASTERED</span>';
+            } else if (isLocked) {
+              badgeHtml = '<span class="status-badge locked">🔒 LOCKED</span>';
+            } else {
+              badgeHtml = `<span class="status-badge ${statusClass}">⚡ ${t.status.toUpperCase()}</span>`;
+            }
+
             return `
-              <div class="topic-card ${isLocked ? 'locked' : ''}" onclick="${isLocked ? `showToast('Complete previous topics to unlock')` : `window.location.hash='#quiz/${t.id}'`}">
+              <div class="topic-card gotham-map-node ${isLocked ? 'locked-node' : 'unlocked-node'} ${isMastered ? 'mastered-node' : ''}" 
+                   onclick="${isLocked ? `showToast('Complete preceding verification gate to unlock this topic', 'error')` : `window.location.hash='#quiz/${t.id}'`}">
                 <div class="topic-header">
-                  <span style="font-size: 12px; font-weight: 700; color: var(--text-muted);">#${t.order}</span>
-                  <span class="status-badge ${t.status}">${t.status}</span>
+                  <span class="node-order-tag">#${t.order}</span>
+                  ${badgeHtml}
                 </div>
-                <div style="font-weight: 700; font-size: 15px; margin-bottom: 6px; color: var(--text-main);">${t.title}</div>
-                <div style="font-size: 12.5px; color: var(--text-muted); line-height: 1.4; margin-bottom: 12px;">${t.description || ''}</div>
-                <div style="display: flex; justify-content: space-between; font-size: 11.5px; color: var(--text-dim); border-top: 1px solid var(--border-color); padding-top: 8px;">
-                  <span>Best: <strong>${t.highest_score.toFixed(0)}%</strong></span>
-                  <span>${isLocked ? '🔒 Locked' : '▶ Train'}</span>
+                <div class="topic-title-text">${t.title}</div>
+                <div class="topic-desc-text">${t.description || ''}</div>
+                <div class="topic-node-footer">
+                  <span>High Score: <strong>${t.highest_score.toFixed(0)}%</strong></span>
+                  <span class="train-prompt-link">${isLocked ? 'Locked' : '▶ Launch Drill'}</span>
                 </div>
               </div>
             `;
@@ -185,51 +208,57 @@ async function loadRoadmap() {
       </div>
     `).join('');
   } catch (err) {
-    container.innerHTML = '<div style="color: #ef4444;">Failed to load roadmap.</div>';
+    container.innerHTML = '<div style="color: var(--status-error); text-align: center; padding: 20px;">Failed to load curriculum roadmap.</div>';
   }
 }
 
-// --- Links View ---
+// --- Curated Links View ---
 async function loadAllLinks() {
   const container = document.getElementById('linksContainer');
+  if (!container) return;
+
   try {
     const res = await fetch('/api/links/variables-and-types');
     const links = await res.json();
 
     container.innerHTML = links.map(l => `
-      <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg-app); border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 8px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg-surface); border: 1px solid var(--border-steel); border-radius: var(--radius-xs); margin-bottom: 8px;">
         <div style="display: flex; align-items: center; gap: 10px;">
-          <input type="checkbox" ${l.is_completed ? 'checked' : ''} onclick="toggleLinkCompleted(${l.id})" title="Mark read/watched" style="cursor: pointer;">
+          <input type="checkbox" ${l.is_completed ? 'checked' : ''} onclick="toggleLinkCompleted(${l.id})" title="Mark read/completed" style="cursor: pointer; accent-color: var(--accent-yellow);">
           <div>
-            <a href="${l.url}" target="_blank" style="color: var(--text-main); font-weight: 600; text-decoration: none; font-size: 14px;">
+            <a href="${l.url}" target="_blank" style="color: var(--text-primary); font-weight: 600; text-decoration: none; font-size: 14px;">
               ${l.type === 'video' ? '📺' : '📄'} ${l.title}
             </a>
-            <div style="font-size: 11.5px; color: var(--text-muted);">${l.level} • ${l.is_active ? '✅ Link verified' : '⚠️ Unreachable'}</div>
+            <div style="font-size: 11.5px; color: var(--text-muted); font-family: var(--font-mono);">${l.level} • ${l.is_active ? 'Verified Link' : 'Unreachable'}</div>
           </div>
         </div>
-        <a href="${l.url}" target="_blank" style="font-size: 12px; color: var(--accent-cyan); text-decoration: none;">&nearr; Visit</a>
+        <a href="${l.url}" target="_blank" style="font-size: 12px; color: var(--accent-yellow); text-decoration: none; font-family: var(--font-mono);">&nearr; Open</a>
       </div>
     `).join('');
   } catch (e) {
-    container.innerHTML = '<div style="color: var(--text-muted); font-size: 13px;">No links loaded.</div>';
+    container.innerHTML = '<div style="color: var(--text-muted); font-size: 13px;">No resources loaded.</div>';
   }
 }
 
 async function toggleLinkCompleted(linkId) {
   try {
     await fetch(`/api/links/${linkId}/toggle`, { method: 'PUT' });
-    showToast('Link progress saved.');
+    showToast('Resource progress saved.');
   } catch (e) {
     console.error('Failed to toggle link:', e);
   }
 }
 
 function openAddLinkModal() {
-  document.getElementById('addLinkModal').classList.add('active');
+  const modal = document.getElementById('addLinkModal');
+  if (window.GothamMotion) window.GothamMotion.openModalAnimated(modal);
+  else modal.classList.add('active');
 }
 
 function closeAddLinkModal() {
-  document.getElementById('addLinkModal').classList.remove('active');
+  const modal = document.getElementById('addLinkModal');
+  if (window.GothamMotion) window.GothamMotion.closeModalAnimated(modal);
+  else modal.classList.remove('active');
 }
 
 async function submitCustomLink(e) {
@@ -247,10 +276,10 @@ async function submitCustomLink(e) {
     });
     const link = await res.json();
     closeAddLinkModal();
-    showToast('Custom link saved successfully!');
+    showToast('Resource registered to topic!');
     loadAllLinks();
   } catch (err) {
-    showToast('Error saving link: ' + err.message, 'error');
+    showToast('Error saving resource: ' + err.message, 'error');
   }
 }
 
@@ -301,9 +330,9 @@ function initSettingsForm() {
         body: JSON.stringify(payload)
       });
       const data = await res.json();
-      showToast(data.message || 'Settings saved successfully!');
+      showToast(data.message || 'System preferences committed.');
     } catch (err) {
-      showToast('Failed to save settings: ' + err.message, 'error');
+      showToast('Failed to commit preferences: ' + err.message, 'error');
     }
   });
 }
@@ -314,7 +343,7 @@ async function sendTestPush() {
     const data = await res.json();
     showToast(data.message);
   } catch (e) {
-    showToast('Failed to send test push: ' + e.message, 'error');
+    showToast('Failed to trigger test alert: ' + e.message, 'error');
   }
 }
 
@@ -324,7 +353,6 @@ async function sendTestEmail() {
     const data = await res.json();
     showToast(data.message);
   } catch (e) {
-    showToast('Failed to send test email: ' + e.message, 'error');
+    showToast('Failed to trigger test email: ' + e.message, 'error');
   }
 }
-

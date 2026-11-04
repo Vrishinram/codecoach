@@ -1,11 +1,11 @@
 {
-  "name": "CodeCoach - C# & .NET Educator",
+  "name": "CodeCoach • The Dark Knight of .NET",
   "short_name": "CodeCoach",
-  "description": "Professional C# & .NET instructor chatbot with structured sets of 25 questions, verified mastery, and smart daily notifications.",
+  "description": "Gotham-grade active-recall C# & .NET 9 training engine with 4-gate mastery verification and daily spaced-repetition telemetry.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0284c7",
+  "background_color": "#07080b",
+  "theme_color": "#f5c518",
   "orientation": "portrait-primary",
   "icons": [
     {

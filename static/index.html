@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CodeCoach • Active-Recall C# & .NET 9 Training Engine</title>
+  <title>CodeCoach • The Dark Knight of .NET</title>
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#080c14">
+  <meta name="theme-color" content="#f5c518">
   <link rel="icon" type="image/svg+xml" href="/static/icons/icon.svg">
   <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
 
-  <!-- Engineered Google Fonts: Space Grotesk (Headings), Plus Jakarta Sans (UI/Body), JetBrains Mono (Code/Telemetry) -->
+  <!-- Gotham Noir Google Fonts: Bebas Neue & Oswald (Headings), Inter (Body), JetBrains Mono (Code/Telemetry) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 
   <!-- Highlight.js for C# syntax highlighting -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" id="hljs-theme">
@@ -22,18 +22,55 @@
   <!-- Marked.js for GitHub-flavored Markdown rendering -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
 
+  <!-- GSAP & ScrollTrigger from cdnjs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
+
+  <!-- 1. Intro Loader: Bat-Signal Sweep & Reveal (Skippable & Session Cached) -->
+  <div id="gothamIntroLoader">
+    <div class="signal-beam"></div>
+    <div class="signal-cloud-target">
+      <img src="/static/icons/icon.svg" alt="Bat-Signal" class="signal-emblem-reveal">
+    </div>
+    <div class="intro-tagline">THE DARK KNIGHT OF .NET</div>
+    <button class="skip-intro-btn" id="skipIntroBtn">[ ESC // SKIP SIGNAL ]</button>
+  </div>
+
+  <!-- 2. Ambient Overlays: Throttled Lightning Flash & Diagonal Tab Slash Wipe -->
+  <div id="gothamLightningFlash"></div>
+  <div id="gothamSlashWipe"></div>
+
+  <!-- 3. Parallax Gotham Skyline Backdrop -->
+  <div class="gotham-skyline-wrapper" aria-hidden="true">
+    <!-- Layer 1: Distant Spire Silhouettes & Gotham Moon -->
+    <div class="skyline-layer-back">
+      <svg viewBox="0 0 1440 320" fill="none" preserveAspectRatio="none">
+        <path d="M0,320 L0,220 L60,220 L75,170 L90,220 L160,220 L190,140 L210,140 L240,220 L320,220 L350,110 L360,110 L390,220 L480,220 L510,160 L540,220 L640,220 L670,90 L680,90 L710,220 L800,220 L840,130 L870,220 L980,220 L1010,160 L1040,220 L1140,220 L1180,100 L1200,100 L1230,220 L1340,220 L1380,150 L1440,220 L1440,320 Z" fill="#0d1017" opacity="0.65"/>
+      </svg>
+    </div>
+    <!-- Layer 2: Midground Skyscrapers & Antennae -->
+    <div class="skyline-layer-mid">
+      <svg viewBox="0 0 1440 320" fill="none" preserveAspectRatio="none">
+        <path d="M0,320 L0,260 L40,260 L40,210 L90,210 L90,260 L140,260 L140,180 L180,180 L180,260 L260,260 L260,150 L310,150 L310,260 L400,260 L400,190 L450,190 L450,260 L540,260 L540,160 L600,160 L600,260 L700,260 L700,130 L740,130 L740,260 L830,260 L830,200 L880,200 L880,260 L970,260 L970,140 L1020,140 L1020,260 L1110,260 L1110,180 L1160,180 L1160,260 L1250,260 L1250,170 L1300,170 L1300,260 L1380,260 L1380,210 L1440,210 L1440,320 Z" fill="#12151c" opacity="0.85"/>
+      </svg>
+    </div>
+    <!-- Layer 3: Drifting Low-Altitude Gotham Mist -->
+    <div class="gotham-mist-layer"></div>
+  </div>
+
   <div class="app-container">
 
     <!-- Top Unified App Bar -->
     <header class="app-header">
       <div class="brand-wrapper">
-        <button class="rail-toggle-btn" id="railToggleBtn" title="Toggle Curriculum Rail" aria-label="Toggle Curriculum Rail">
+        <button class="rail-toggle-btn icon-btn" id="railToggleBtn" title="Toggle Curriculum Rail" aria-label="Toggle Curriculum Rail">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
         </button>
-        <img src="/static/icons/icon.svg" alt="CodeCoach Logo" class="brand-logo">
+        <img src="/static/icons/icon.svg" alt="CodeCoach Bat Logo" class="brand-logo-bat">
         <div class="brand-text-block">
           <h1 class="brand-title"><span id="assistantBrand">CodeCoach</span></h1>
           <span class="brand-tag">C# .NET 9</span>
@@ -52,10 +89,11 @@
       <!-- Action Items -->
       <div class="header-actions">
         <div class="streak-pill" id="streakPill" title="Daily consecutive training streak">
-          🔥 <span id="streakCount">0</span>d Streak
+          🦇 <span id="streakCount">0</span>d Streak
         </div>
-        <button class="icon-btn" id="themeToggleBtn" title="Toggle Light/Dark Theme" aria-label="Toggle Theme">🌙</button>
-        <button class="icon-btn" id="pushNotifBtn" title="Enable 8 AM / 8 PM Training Alerts" aria-label="Enable Push Alerts">🔔</button>
+        <button class="icon-btn" id="soundToggleBtn" title="Sound Effects: MUTED (Click to Enable)" aria-label="Toggle Sound Effects">🔇</button>
+        <button class="icon-btn" id="themeToggleBtn" title="Toggle Gotham Night / Day Theme" aria-label="Toggle Theme">🌙</button>
+        <button class="icon-btn" id="pushNotifBtn" title="Enable 8 AM / 8 PM Verification Alerts" aria-label="Enable Push Alerts">🔔</button>
       </div>
     </header>
 
@@ -75,18 +113,17 @@
         </div>
 
         <div class="rail-tree-container" id="railTopicList">
-          <!-- Dynamically populated by app.js / quiz.js -->
-          <div class="rail-loading-state">Loading curriculum roadmap...</div>
+          <div class="rail-loading-state">Surveying curriculum grid...</div>
         </div>
 
         <div class="rail-telemetry-footer">
           <div class="mono-meta-row">
-            <span>ENGINE</span>
-            <span class="mono-status-online">READY</span>
+            <span>RADAR</span>
+            <span style="color: var(--status-success); font-weight: 700;">ONLINE</span>
           </div>
           <div class="mono-meta-row">
-            <span>RETENTION CHECKS</span>
-            <span id="railDueCount" style="color: var(--status-warning);">0 Due</span>
+            <span>RETENTION GATES</span>
+            <span id="railDueCount" style="color: var(--accent-yellow);">0 Due</span>
           </div>
           <div class="mono-meta-row">
             <span>TOKENS TRACKED</span>
@@ -101,22 +138,35 @@
         <!-- 1. CHAT / REPL CONSOLE VIEW -->
         <section class="view-section active" id="view-chat">
           <div class="chat-container">
-            <!-- REPL Header Banner -->
-            <div class="repl-status-bar">
-              <span class="repl-prompt-symbol">❯_</span>
-              <span class="repl-context-text">CodeCoach Interactive REPL Console • .NET 9.0 Runtime Ready</span>
-              <span class="repl-status-pill">Active</span>
+            <div class="chat-status-bar">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="status-indicator-dot"></span>
+                <span>GOTHAM REPL TERMINAL • C# 13 / .NET 9 ENGINE READY</span>
+              </div>
+              <div>
+                <span>ACTIVE RECALL ACTIVE</span>
+              </div>
             </div>
 
-            <!-- Messages Stream -->
             <div class="chat-messages" id="chatMessages">
-              <!-- Rendered dynamically -->
+              <div class="message-row assistant">
+                <div class="repl-speaker-tag speaker-assistant">
+                  <span class="bat-glyph">🦇</span> <span>[SYS::CodeCoach]</span>
+                </div>
+                <div class="message-bubble">
+                  Welcome to Gotham. I am your verified C# and .NET 9 active-recall educator.
+                  <br><br>
+                  Every topic requires four proofs of real mastery: <strong>70% drill benchmark</strong>, <strong>teach-back explanation</strong>, <strong>code implementation</strong>, and <strong>1/3/7-day retention retests</strong>.
+                  <br><br>
+                  Type <code>/start &lt;topic&gt;</code> to launch a drill, or ask any C# architectural question below.
+                </div>
+              </div>
             </div>
 
-            <!-- Input Console Bar -->
-            <div class="chat-input-bar">
-              <div class="slash-hints">
-                <span class="slash-pill" onclick="insertSlashCommand('/start ')">/start &lt;topic&gt;</span>
+            <!-- Command Bar & Form Deck -->
+            <div class="chat-controls-deck">
+              <div class="slash-pills-bar">
+                <span class="slash-pill" onclick="insertSlashCommand('/start')">/start</span>
                 <span class="slash-pill" onclick="insertSlashCommand('/next')">/next</span>
                 <span class="slash-pill" onclick="insertSlashCommand('/hint')">/hint</span>
                 <span class="slash-pill" onclick="insertSlashCommand('/skip')">/skip</span>
@@ -126,7 +176,7 @@
               </div>
               <form class="chat-form" id="chatForm">
                 <input type="text" id="chatInput" class="chat-input" placeholder="Ask a C#/.NET architectural concept or enter /start <topic>..." autocomplete="off">
-                <button type="submit" class="btn-primary" id="chatSendBtn">Ask Concept</button>
+                <button type="submit" class="btn-primary" id="chatSendBtn">Transcribe &rarr;</button>
               </form>
             </div>
           </div>
@@ -144,17 +194,17 @@
         <!-- 3. ROADMAP / CURRICULUM VIEW -->
         <section class="view-section" id="view-roadmap">
           <div class="content-wrapper-standard">
-            <div class="roadmap-header-deck">
+            <div class="roadmap-header-deck" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
               <div>
                 <span class="mono-step">[ 02 // CURRICULUM PATH ]</span>
-                <h2 class="view-title">C# & .NET 9 Verification Path</h2>
-                <p class="view-subtitle">Each topic requires 4 proofs of retention: 70% MCQ benchmark, teach-back explanation, code implementation, and 1/3/7-day retests.</p>
+                <h2 class="view-title">Gotham C# & .NET 9 Verification Map</h2>
+                <p class="view-subtitle">Each zone requires four proofs of retention: 70% MCQ benchmark, teach-back explanation, code implementation, and 1/3/7-day retests.</p>
               </div>
-              <button class="btn-secondary" onclick="openPlacementModal()">Calibrate My Starting Level (10 Qs)</button>
+              <button class="btn-secondary" onclick="openPlacementModal()">Calibrate Starting Level (10 Qs)</button>
             </div>
 
             <div id="roadmapLevels">
-              <!-- Rendered dynamically by quiz.js -->
+              <!-- Rendered dynamically by dashboard.js -->
             </div>
           </div>
         </section>
@@ -162,18 +212,18 @@
         <!-- 4. DASHBOARD / RETENTION TELEMETRY VIEW -->
         <section class="view-section" id="view-dashboard">
           <div class="content-wrapper-standard">
-            <div class="view-header-deck">
+            <div class="view-header-deck" style="margin-bottom: 20px;">
               <span class="mono-step">[ 03 // TELEMETRY ]</span>
               <h2 class="view-title">Retention Analytics & Active Gates</h2>
             </div>
 
-            <!-- Asymmetric Hero Telemetry Strip (Kill Three-Card Reflex) -->
+            <!-- Asymmetric Hero Telemetry Strip -->
             <div class="telemetry-hero-strip">
               <!-- Left 60%: Spaced Repetition Due Queue -->
               <div class="telemetry-primary-card">
                 <div class="card-eyebrow">
                   <span>SPACED REPETITION QUEUE</span>
-                  <span class="badge badge-accent">1d • 3d • 7d Gates</span>
+                  <span class="badge badge-topic">1d • 3d • 7d Gates</span>
                 </div>
                 <div id="retentionHeroContent">
                   <!-- Populated dynamically by dashboard.js -->
@@ -202,9 +252,9 @@
 
             <!-- Score History Performance Chart -->
             <div class="telemetry-card" style="margin-top: 24px;">
-              <div class="card-header-flex">
-                <h3 class="card-title">Recent 25-Question Drill Scores</h3>
-                <span class="mono-threshold-label">Pass Benchmark: 70% • Mastery Benchmark: 85%</span>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h3 style="font-family: var(--font-display); font-size: 20px; letter-spacing: 0.5px; color: var(--text-primary); margin: 0;">Recent 25-Question Drill Scores</h3>
+                <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">Pass: 70% • Mastery: 85%</span>
               </div>
               <div id="scoreHistoryChart" class="score-chart-container">
                 <!-- Bars injected dynamically by dashboard.js -->
@@ -213,19 +263,19 @@
 
             <!-- Curated Official Resources -->
             <div class="telemetry-card" style="margin-top: 24px;">
-              <div class="card-header-flex">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                 <div>
-                  <h3 class="card-title">Curated Documentation & Custom Links</h3>
-                  <p class="card-subtitle">Verified Microsoft Learn articles and official technical video walkthroughs.</p>
+                  <h3 style="font-family: var(--font-display); font-size: 20px; letter-spacing: 0.5px; color: var(--text-primary); margin: 0;">Verified Technical Documentation</h3>
+                  <p style="font-size: 13px; color: var(--text-muted); margin: 2px 0 0;">Official Microsoft Learn articles and architectural video walkthroughs.</p>
                 </div>
-                <button class="btn-primary" style="font-size: 13px; padding: 6px 14px;" onclick="openAddLinkModal()">+ Save Resource to Topic</button>
+                <button class="btn-primary" style="font-size: 13px; padding: 6px 14px;" onclick="openAddLinkModal()">+ Save Resource</button>
               </div>
-              <div id="linksContainer" style="margin-top: 16px;">
+              <div id="linksContainer" style="margin-top: 14px;">
                 <!-- Injected by dashboard.js -->
               </div>
             </div>
 
-            <!-- Monospace System Footer Status (Task 6 Demotion) -->
+            <!-- Monospace System Footer Status -->
             <div class="system-status-footer">
               <span>SYSTEM::STATUS • SQLite Persistent Jobstore Active</span>
               <span>TOKEN CONSUMPTION • <strong id="statTokens">0</strong> Tokens Tracked</span>
@@ -235,68 +285,70 @@
 
         <!-- 5. SETTINGS / PREFERENCES VIEW -->
         <section class="view-section" id="view-settings">
-          <div class="content-wrapper-narrow">
-            <div class="view-header-deck">
+          <div class="content-wrapper-narrow" style="max-width: 720px; margin: 0 auto;">
+            <div class="view-header-deck" style="margin-bottom: 20px;">
               <span class="mono-step">[ 04 // SYSTEM CONFIG ]</span>
               <h2 class="view-title">Training Schedule & Delivery Preferences</h2>
             </div>
 
-            <form id="settingsForm" style="display: flex; flex-direction: column; gap: 20px; margin-top: 20px;">
+            <form id="settingsForm" style="display: flex; flex-direction: column; gap: 20px;">
               <div class="telemetry-card">
-                <h3 class="card-title">📅 Daily Reminder Schedule</h3>
-                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 12px;">
-                  <label class="form-label">Reminder Times (24-Hour Format, Comma-Separated)</label>
+                <h3 style="font-family: var(--font-display); font-size: 20px; color: var(--accent-yellow); margin-bottom: 10px;">📅 Daily Reminder Schedule</h3>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                  <label style="font-family: var(--font-mono); font-size: 12px; color: var(--text-muted);">Reminder Times (24-Hour Format, Comma-Separated)</label>
                   <input type="text" id="settingReminderTimes" class="chat-input" placeholder="08:00,20:00">
-                  <span class="form-helper-text">Evaluated in your configured timezone: <strong id="settingTimezone">Asia/Kolkata</strong></span>
+                  <span style="font-size: 12px; color: var(--text-muted);">Evaluated in your configured timezone: <strong id="settingTimezone" style="color: var(--text-primary);">Asia/Kolkata</strong></span>
                 </div>
               </div>
 
               <div class="telemetry-card">
-                <h3 class="card-title">🔔 Notification Delivery Channels</h3>
-                <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 14px;">
-                  <label class="checkbox-row">
-                    <input type="checkbox" id="settingPushEnabled" class="checkbox-control">
-                    <span>Web Push Notifications (Desktop & Phone PWA)</span>
+                <h3 style="font-family: var(--font-display); font-size: 20px; color: var(--accent-yellow); margin-bottom: 10px;">🔔 Notification Channels</h3>
+                <div style="display: flex; flex-direction: column; gap: 14px;">
+                  <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" id="settingPushEnabled" style="accent-color: var(--accent-yellow);">
+                    <span><strong>Browser Push Notifications</strong> (Actionable verification reminders)</span>
                   </label>
-                  <label class="checkbox-row">
-                    <input type="checkbox" id="settingEmailEnabled" class="checkbox-control">
-                    <span>HTML Email Digest (to <span id="settingUserEmail" class="mono-text">user</span>)</span>
+                  <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" id="settingEmailEnabled" style="accent-color: var(--accent-yellow);">
+                    <span><strong>Email Reminders</strong> (Destination: <span id="settingUserEmail" style="color: var(--accent-yellow);"></span>)</span>
                   </label>
-                  <label class="checkbox-row">
-                    <input type="checkbox" id="settingNtfyEnabled" class="checkbox-control">
-                    <span>ntfy.sh Mobile Instant Fallback (<span id="settingNtfyTopic" class="mono-text">configured</span>)</span>
+                  <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" id="settingNtfyEnabled" style="accent-color: var(--accent-yellow);">
+                    <span><strong>ntfy.sh Mobile Alerts</strong> (Topic: <code id="settingNtfyTopic" class="inline-code"></code>)</span>
                   </label>
-                  <label class="checkbox-row" style="margin-top: 6px;">
-                    <input type="checkbox" id="settingPauseReminders" class="checkbox-control">
-                    <span style="color: var(--status-warning); font-weight: 600;">Pause All Automated Reminders</span>
+                  <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+                    <input type="checkbox" id="settingPauseReminders" style="accent-color: var(--accent-yellow);">
+                    <span style="color: var(--status-error);"><strong>Pause All Reminders</strong> (Temporary study freeze)</span>
                   </label>
                 </div>
               </div>
 
               <div class="telemetry-card">
-                <h3 class="card-title">🌙 Quiet Hours Boundaries</h3>
-                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
-                  <label class="checkbox-row">
-                    <input type="checkbox" id="settingQuietHoursEnabled" class="checkbox-control">
-                    <span>Mute all reminder notifications during quiet hours</span>
+                <h3 style="font-family: var(--font-display); font-size: 20px; color: var(--accent-yellow); margin-bottom: 10px;">🌙 Quiet Hours</h3>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                  <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" id="settingQuietHoursEnabled" style="accent-color: var(--accent-yellow);">
+                    <span>Enforce Quiet Hours (Suppress all sound and alerts)</span>
                   </label>
-                  <div style="display: flex; gap: 16px; margin-top: 8px;">
+                  <div style="display: flex; gap: 16px; align-items: center;">
                     <div style="flex: 1;">
-                      <label class="form-label">Quiet Hours Start</label>
+                      <label style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Quiet Start</label>
                       <input type="text" id="settingQuietStart" class="chat-input" placeholder="22:00">
                     </div>
                     <div style="flex: 1;">
-                      <label class="form-label">Quiet Hours End</label>
+                      <label style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Quiet End</label>
                       <input type="text" id="settingQuietEnd" class="chat-input" placeholder="07:00">
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div style="display: flex; gap: 12px; margin-top: 8px;">
-                <button type="submit" class="btn-primary">Update Reminder Schedule & Quiet Hours</button>
-                <button type="button" class="btn-secondary" onclick="sendTestPush()">Send Test Push</button>
-                <button type="button" class="btn-secondary" onclick="sendTestEmail()">Send Test Email</button>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; gap: 10px;">
+                  <button type="button" class="btn-secondary" onclick="sendTestPush()">Test Push</button>
+                  <button type="button" class="btn-secondary" onclick="sendTestEmail()">Test Email</button>
+                </div>
+                <button type="submit" class="btn-primary">Save Preferences</button>
               </div>
             </form>
           </div>
@@ -305,38 +357,23 @@
       </main>
     </div>
 
-    <!-- Mobile Bottom Navigation Bar (Thumb-Accessible for 375px) -->
-    <nav class="mobile-bottom-nav" role="tablist">
-      <button class="bottom-nav-btn active" data-tab="chat">
-        <span class="bottom-nav-icon">💬</span>
-        <span class="bottom-nav-label">REPL</span>
-      </button>
-      <button class="bottom-nav-btn" data-tab="quiz">
-        <span class="bottom-nav-icon">🎯</span>
-        <span class="bottom-nav-label">Drill</span>
-      </button>
-      <button class="bottom-nav-btn" data-tab="roadmap">
-        <span class="bottom-nav-icon">🗺️</span>
-        <span class="bottom-nav-label">Curriculum</span>
-      </button>
-      <button class="bottom-nav-btn" data-tab="dashboard">
-        <span class="bottom-nav-icon">📊</span>
-        <span class="bottom-nav-label">Telemetry</span>
-      </button>
-      <button class="bottom-nav-btn" data-tab="settings">
-        <span class="bottom-nav-icon">⚙️</span>
-        <span class="bottom-nav-label">Config</span>
-      </button>
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav class="mobile-bottom-nav">
+      <button class="bottom-nav-btn active" data-tab="chat">💬 <span>REPL</span></button>
+      <button class="bottom-nav-btn" data-tab="quiz">🎯 <span>Drill</span></button>
+      <button class="bottom-nav-btn" data-tab="roadmap">🗺️ <span>Map</span></button>
+      <button class="bottom-nav-btn" data-tab="dashboard">📊 <span>Stats</span></button>
+      <button class="bottom-nav-btn" data-tab="settings">⚙️ <span>Config</span></button>
     </nav>
   </div>
 
-  <!-- INTERACTION MODALS -->
+  <!-- MODALS -->
 
-  <!-- 1. Placement Test Modal -->
+  <!-- 1. Diagnostic Placement Modal -->
   <div class="modal-overlay" id="placementModal">
     <div class="modal-content">
       <button class="modal-close" onclick="closePlacementModal()">&times;</button>
-      <span class="mono-step">[ DIAGNOSTIC CALIBRATION ]</span>
+      <span class="mono-step">[ CALIBRATION ]</span>
       <h2 class="modal-title">10-Question Diagnostic Placement Test</h2>
       <p class="modal-subtitle">
         Calibrate your starting level. Answer these 10 multi-level questions to unlock known C# fundamentals and jump directly to your actual knowledge boundary.
@@ -357,7 +394,7 @@
       <span class="mono-step">[ VERIFICATION GATE 2 // TEACH-BACK ]</span>
       <h2 class="modal-title">Explain Concept in Your Own Words</h2>
       <p class="modal-subtitle">
-        Explain <strong id="teachBackTopicTitle">this concept</strong> in 3 to 4 sentences. The evaluation engine grades your submission across 3 criteria: accuracy, topic completeness, and explanatory clarity.
+        Explain <strong id="teachBackTopicTitle" style="color: var(--accent-yellow);">this concept</strong> in 3 to 4 sentences. The evaluation engine grades your submission across accuracy, completeness, and clarity.
       </p>
       <textarea id="teachBackInput" class="code-editor-area" style="min-height: 130px;" placeholder="In C#, this concept functions by..."></textarea>
       
@@ -376,10 +413,10 @@
       <button class="modal-close" onclick="closeAppChallengeModal()">&times;</button>
       <span class="mono-step">[ VERIFICATION GATE 3 // IMPLEMENTATION ]</span>
       <h2 class="modal-title">Practical C# Coding Challenge</h2>
-      <div id="appChallengePromptText" class="code-challenge-prompt">
+      <div id="appChallengePromptText" class="code-challenge-prompt" style="padding: 12px; background: var(--bg-code); border: 1px solid var(--border-steel); border-radius: var(--radius-xs); margin-bottom: 14px; font-family: var(--font-body); font-size: 14px;">
         Loading coding prompt...
       </div>
-      <label class="form-label" style="margin-top: 14px; display: block;">Your C# Implementation Code:</label>
+      <label style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-bottom: 6px; display: block;">Your C# Implementation Code:</label>
       <textarea id="appChallengeCodeInput" class="code-editor-area" style="min-height: 180px;" placeholder="// Implement your C# solution"></textarea>
 
       <div id="appChallengeResult" style="margin-top: 16px; display: none;"></div>
@@ -399,19 +436,19 @@
       <h2 class="modal-title">Save Resource to Topic</h2>
       <form id="addLinkForm" onsubmit="submitCustomLink(event)" style="display: flex; flex-direction: column; gap: 16px; margin-top: 14px;">
         <div>
-          <label class="form-label">Target Topic</label>
+          <label style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Target Topic</label>
           <select id="linkTopicSelect" class="chat-input" style="width: 100%;"></select>
         </div>
         <div>
-          <label class="form-label">Resource Title</label>
+          <label style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Resource Title</label>
           <input type="text" id="linkTitleInput" class="chat-input" placeholder="e.g. In-Depth Guide to C# Span<T>" required>
         </div>
         <div>
-          <label class="form-label">Resource URL</label>
+          <label style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Resource URL</label>
           <input type="url" id="linkUrlInput" class="chat-input" placeholder="https://..." required>
         </div>
         <div>
-          <label class="form-label">Resource Type</label>
+          <label style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Resource Type</label>
           <select id="linkTypeSelect" class="chat-input" style="width: 100%;">
             <option value="article">Documentation / Article</option>
             <option value="video">Technical Video Tutorial</option>
@@ -423,6 +460,7 @@
   </div>
 
   <!-- Frontend JS Scripts -->
+  <script src="/static/js/motion.js"></script>
   <script src="/static/js/app.js"></script>
   <script src="/static/js/chat.js"></script>
   <script src="/static/js/quiz.js"></script>
