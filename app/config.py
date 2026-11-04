@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""
     EMAIL_FROM: str = "CodeCoach <noreply@codecoach.local>"
-    USER_EMAIL: str = ""
+    USER_EMAIL: str = "vrishinram4646@gmail.com"
 
     # Web Push (VAPID)
     VAPID_PUBLIC_KEY: str = ""
@@ -84,6 +84,8 @@ class Settings(BaseSettings):
             return "PostgreSQL (Hosted)"
         elif "libsql" in url:
             return "Turso LibSQL"
+        elif os.environ.get("DATA_BLOB_READ_WRITE_TOKEN") or os.environ.get("BLOB_READ_WRITE_TOKEN"):
+            return "SQLite + Vercel Blob (Durable Serverless)"
         elif "/tmp/" in url:
             return "SQLite (Serverless /tmp Ephemeral)"
         return "SQLite (Local Persistent)"

@@ -61,6 +61,8 @@ async def subscribe_web_push(payload: PushSubscriptionCreate, db: Session = Depe
         )
         db.add(sub)
     db.commit()
+    from app.services.durable_store import sync_subscriptions_to_blob
+    sync_subscriptions_to_blob(db)
     logger.info("Registered Web Push subscription endpoint: %s...", endpoint[:30])
     return {"status": "subscribed", "message": "Device notifications registered successfully."}
 
@@ -70,6 +72,9 @@ async def send_test_push(db: Session = Depends(get_db)):
     Sends an immediate test push to all subscribed devices and optional ntfy channel.
     Returns explicit diagnostics on registered devices, delivered pushes, and failure causes.
     """
+    from app.services.durable_store import sync_subscriptions_from_blob
+    sync_subscriptions_from_blob(db)
+
     push_stats = await send_web_push(
         db=db,
         title=f"{settings.ASSISTANT_NAME} Test Push",

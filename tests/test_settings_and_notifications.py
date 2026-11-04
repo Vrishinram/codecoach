@@ -96,14 +96,21 @@ def test_api_test_email_clean_error_when_unconfigured(client: TestClient, monkey
     assert "hint" in data
 
 def test_config_effective_app_url_and_storage_engine(monkeypatch):
+    monkeypatch.delenv("DATA_BLOB_READ_WRITE_TOKEN", raising=False)
+    monkeypatch.delenv("BLOB_READ_WRITE_TOKEN", raising=False)
+
     # Test effective_app_url on Vercel
     monkeypatch.setenv("VERCEL_PROJECT_PRODUCTION_URL", "my-codecoach.vercel.app")
     monkeypatch.setattr(settings, "APP_URL", "http://localhost:8000")
     assert settings.effective_app_url == "https://my-codecoach.vercel.app"
 
-    # Test storage engine label
+    # Test storage engine label (ephemeral serverless)
     monkeypatch.setattr(settings, "DATABASE_URL", "sqlite:////tmp/codecoach.db")
     assert "Ephemeral" in settings.storage_engine_label
+
+    # Test storage engine label (durable with Vercel Blob sync)
+    monkeypatch.setenv("DATA_BLOB_READ_WRITE_TOKEN", "test-token")
+    assert "Durable Serverless" in settings.storage_engine_label
 
     monkeypatch.setattr(settings, "DATABASE_URL", "postgresql://user:pass@ep-cool-db.us-east-2.aws.neon.tech/codecoach")
     assert "PostgreSQL (Hosted)" in settings.storage_engine_label
