@@ -622,22 +622,38 @@ async function connectGoogleAccount() {
     const res = await fetch('/api/auth/google/url');
     const data = await res.json();
     if (!data.configured || !data.url) {
-      alert(
-        'Google OAuth Credentials Missing!\n\n' +
-        'To enable Sign in with Google & Gmail API in production:\n' +
-        '1. Go to Google Cloud Console (console.cloud.google.com) -> APIs & Services -> Credentials\n' +
-        '2. Create OAuth 2.0 Client ID (Web Application)\n' +
-        '3. Add Authorized redirect URI:\n   ' + (data.redirect_uri || 'https://codecoach-blush.vercel.app/api/auth/google/callback') + '\n' +
-        '4. Add to Vercel Project -> Settings -> Environment Variables:\n' +
-        '   - GOOGLE_OAUTH_CLIENT_ID\n   - GOOGLE_OAUTH_CLIENT_SECRET\n' +
-        '5. Redeploy.'
-      );
+      openGoogleSetupModal(data.redirect_uri);
       return;
     }
     window.location.href = data.url;
   } catch (err) {
     showToast('Google OAuth initialization error: ' + err.message, 'error');
   }
+}
+
+function openGoogleSetupModal(redirectUri) {
+  const modal = document.getElementById('googleSetupModal');
+  if (!modal) return;
+  const input = document.getElementById('googleSetupRedirectUriInput');
+  if (input && redirectUri) {
+    input.value = redirectUri;
+  }
+  if (window.GothamMotion) window.GothamMotion.openModalAnimated(modal);
+  else modal.classList.add('active');
+}
+
+function closeGoogleSetupModal() {
+  const modal = document.getElementById('googleSetupModal');
+  if (!modal) return;
+  if (window.GothamMotion) window.GothamMotion.closeModalAnimated(modal);
+  else modal.classList.remove('active');
+}
+
+function copyGoogleRedirectUri() {
+  const input = document.getElementById('googleSetupRedirectUriInput');
+  if (!input) return;
+  navigator.clipboard.writeText(input.value);
+  showToast('Copied redirect URI to clipboard!');
 }
 
 async function disconnectGoogleAccount() {
@@ -712,5 +728,8 @@ function closeEmailPreviewModal() {
 window.registerCurrentDevice = registerCurrentDevice;
 window.connectGoogleAccount = connectGoogleAccount;
 window.disconnectGoogleAccount = disconnectGoogleAccount;
+window.openGoogleSetupModal = openGoogleSetupModal;
+window.closeGoogleSetupModal = closeGoogleSetupModal;
+window.copyGoogleRedirectUri = copyGoogleRedirectUri;
 window.openEmailPreviewModal = openEmailPreviewModal;
 window.closeEmailPreviewModal = closeEmailPreviewModal;
