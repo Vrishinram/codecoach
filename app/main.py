@@ -25,6 +25,7 @@ from app.api.routes_notifications import router as notifications_router
 from app.api.routes_settings import router as settings_router
 from app.api.routes_practice import router as practice_router
 from app.api.routes_smart_learning import router as smart_learning_router
+from app.api.routes_auth import router as auth_router
 from app.migrations.runner import run_migrations
 
 # Configure logging
@@ -134,6 +135,7 @@ app.include_router(notifications_router, dependencies=[Depends(check_optional_au
 app.include_router(settings_router, dependencies=[Depends(check_optional_auth)])
 app.include_router(practice_router, dependencies=[Depends(check_optional_auth)])
 app.include_router(smart_learning_router, dependencies=[Depends(check_optional_auth)])
+app.include_router(auth_router, dependencies=[Depends(check_optional_auth)])
 
 # WebSocket Chat endpoint with rate limit consideration
 @app.websocket("/ws/chat")

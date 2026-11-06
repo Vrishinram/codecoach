@@ -51,6 +51,18 @@ def run_migrations():
         else:
             logger.info("Migration 002 already applied.")
 
+        # Migration 003: Google OAuth 2.0 & Gmail API
+        if "003_google_oauth_tokens" not in applied_versions:
+            logger.info("Applying migration 003_google_oauth_tokens...")
+            apply_migration_003(conn)
+            conn.execute(
+                text("INSERT INTO schema_migrations (version) VALUES (:version);"),
+                {"version": "003_google_oauth_tokens"}
+            )
+            logger.info("Migration 003 applied successfully.")
+        else:
+            logger.info("Migration 003 already applied.")
+
 def apply_migration_001(conn):
     """
     Creates tables for:
@@ -244,5 +256,27 @@ def apply_migration_002(conn):
         conn.execute(text("ALTER TABLE user_profile ADD COLUMN custom_ntfy_topic VARCHAR(120);"))
     except Exception:
         pass
+
+def apply_migration_003(conn):
+    """
+    Adds Google OAuth & Gmail API columns to user_profile idempotently:
+    - google_connected BOOLEAN DEFAULT FALSE
+    - google_email VARCHAR(120)
+    - google_access_token TEXT
+    - google_refresh_token TEXT
+    - google_token_expiry TIMESTAMP
+    """
+    for col, col_type in [
+        ("google_connected", "BOOLEAN DEFAULT FALSE"),
+        ("google_email", "VARCHAR(120)"),
+        ("google_access_token", "TEXT"),
+        ("google_refresh_token", "TEXT"),
+        ("google_token_expiry", "TIMESTAMP")
+    ]:
+        try:
+            conn.execute(text(f"ALTER TABLE user_profile ADD COLUMN {col} {col_type};"))
+        except Exception:
+            pass
+
 
 

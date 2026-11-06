@@ -265,6 +265,13 @@ class UserProfile(Base):
     custom_email = Column(String(120), nullable=True)
     custom_ntfy_topic = Column(String(120), nullable=True)
 
+    # Google OAuth 2.0 & Gmail API
+    google_connected = Column(Boolean, default=False)
+    google_email = Column(String(120), nullable=True)
+    google_access_token = Column(Text, nullable=True)
+    google_refresh_token = Column(Text, nullable=True)
+    google_token_expiry = Column(DateTime, nullable=True)
+
     updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
 
 # ============================================================================

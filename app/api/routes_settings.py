@@ -21,12 +21,21 @@ async def get_user_settings(db: Session = Depends(get_db)):
         db.add(profile)
         db.commit()
 
+    from app.services.durable_store import sync_google_auth_from_blob
+    sync_google_auth_from_blob(db)
+
+    google_connected = bool(profile.google_connected and profile.google_refresh_token)
+
     return {
         "assistant_name": settings.ASSISTANT_NAME,
         "app_url": settings.effective_app_url,
-        "user_email": profile.custom_email or settings.USER_EMAIL,
+        "user_email": profile.custom_email or profile.google_email or settings.USER_EMAIL,
         "custom_email": profile.custom_email or "",
         "default_email": settings.USER_EMAIL,
+        "google_oauth_configured": bool(settings.GOOGLE_OAUTH_CLIENT_ID and settings.GOOGLE_OAUTH_CLIENT_SECRET),
+        "google_connected": google_connected,
+        "google_email": profile.google_email or "",
+        "google_redirect_uri": settings.effective_google_redirect_uri,
         "smtp_configured": bool(settings.SMTP_USER and settings.SMTP_PASSWORD),
         "vapid_configured": bool(settings.VAPID_PUBLIC_KEY and settings.VAPID_PRIVATE_KEY),
         "ntfy_topic": profile.custom_ntfy_topic or settings.NTFY_TOPIC or "codecoach_demo",

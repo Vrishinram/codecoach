@@ -48,6 +48,11 @@ class Settings(BaseSettings):
     EMAIL_FROM: str = "CodeCoach <noreply@codecoach.local>"
     USER_EMAIL: str = "vrishinram4646@gmail.com"
 
+    # Google OAuth 2.0 & Gmail API Configuration
+    GOOGLE_OAUTH_CLIENT_ID: str = Field(default="", description="Google OAuth 2.0 Client ID")
+    GOOGLE_OAUTH_CLIENT_SECRET: str = Field(default="", description="Google OAuth 2.0 Client Secret")
+    GOOGLE_OAUTH_REDIRECT_URI: str = Field(default="", description="Optional explicit Google OAuth redirect URI")
+
     # Web Push (VAPID)
     VAPID_PUBLIC_KEY: str = ""
     VAPID_PRIVATE_KEY: str = ""
@@ -76,6 +81,12 @@ class Settings(BaseSettings):
         if os.environ.get("VERCEL"):
             return "https://codecoach-blush.vercel.app"
         return self.APP_URL
+
+    @property
+    def effective_google_redirect_uri(self) -> str:
+        if self.GOOGLE_OAUTH_REDIRECT_URI:
+            return self.GOOGLE_OAUTH_REDIRECT_URI.strip()
+        return f"{self.effective_app_url.rstrip('/')}/api/auth/google/callback"
 
     @property
     def storage_engine_label(self) -> str:

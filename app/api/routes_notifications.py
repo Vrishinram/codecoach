@@ -148,17 +148,24 @@ async def send_test_email(body: Optional[EmailTestBody] = None, db: Session = De
             }
         )
 
-    if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
+    from app.services.durable_store import sync_google_auth_from_blob
+    sync_google_auth_from_blob(db)
+    profile = db.query(UserProfile).first()
+    google_connected = bool(profile and profile.google_connected and profile.google_refresh_token)
+    smtp_configured = bool(settings.SMTP_USER and settings.SMTP_PASSWORD)
+
+    if not google_connected and not smtp_configured:
         return JSONResponse(
             status_code=200,
             content={
                 "status": "simulated",
                 "delivered": False,
                 "target_email": target_email,
+                "google_connected": False,
                 "smtp_configured": False,
                 "html_preview": rendered_html,
-                "message": "SMTP credentials not configured in Vercel environment variables. Check SMTP_HOST, SMTP_USER, and SMTP_PASSWORD.",
-                "hint": "Check SMTP_HOST, SMTP_USER, and SMTP_PASSWORD in Vercel environment variables.",
+                "message": "Neither Google Account nor SMTP is configured. Click 'Sign in with Google' in Preferences to send real emails with 1 click!",
+                "hint": "Click 'Sign in with Google' in Preferences or configure SMTP_USER/SMTP_PASSWORD in Vercel environment variables.",
             }
         )
 
@@ -172,34 +179,39 @@ async def send_test_email(body: Optional[EmailTestBody] = None, db: Session = De
             notification_type="test"
         )
         if not sent:
+            method_label = "Gmail API" if google_connected else "SMTP"
             return JSONResponse(
                 status_code=200,
                 content={
                     "status": "simulated",
                     "delivered": False,
                     "target_email": target_email,
-                    "smtp_configured": True,
+                    "google_connected": google_connected,
+                    "smtp_configured": smtp_configured,
                     "html_preview": rendered_html,
-                    "message": f"Live SMTP failed to deliver to {target_email}. Check SMTP_HOST/PORT/USER/PASSWORD.",
-                    "hint": "Check SMTP_HOST, SMTP_PORT, and SMTP_PASSWORD credentials.",
+                    "message": f"Live {method_label} failed to deliver to {target_email}.",
+                    "hint": f"Check your {method_label} connection in Preferences.",
                 }
             )
+        method_label = "Gmail API" if google_connected else "SMTP"
         return {
             "status": "success",
             "delivered": True,
+            "provider": "gmail_api" if google_connected else "smtp",
             "target_email": target_email,
-            "smtp_configured": True,
-            "message": f"Sent to {target_email}"
+            "sender_email": profile.google_email if google_connected else (settings.EMAIL_FROM or settings.SMTP_USER),
+            "message": f"Sent via {method_label} to {target_email}"
         }
     except Exception as e:
+        method_label = "Gmail API" if google_connected else "SMTP"
         return JSONResponse(
             status_code=200,
             content={
                 "status": "simulated",
                 "delivered": False,
                 "target_email": target_email,
-                "message": f"Live SMTP failed: {e}. Check SMTP_HOST/PORT/USER/PASSWORD.",
-                "hint": f"Live SMTP exception: {e}",
+                "message": f"Live {method_label} failed: {e}.",
+                "hint": f"Live {method_label} exception: {e}",
                 "html_preview": rendered_html,
             }
         )

@@ -403,6 +403,35 @@ async function loadSettingsView() {
       sysFooterEl.textContent = `SYSTEM::STATUS • ${s.storage_engine} Active`;
     }
 
+    // Google OAuth & Gmail API State
+    const googleBadge = document.getElementById('googleAuthBadge');
+    const googleConnectedView = document.getElementById('googleConnectedView');
+    const googleDisconnectedView = document.getElementById('googleDisconnectedView');
+    const googleConnectedEmail = document.getElementById('googleConnectedEmail');
+    const googleConfigNote = document.getElementById('googleConfigNote');
+
+    if (s.google_connected && s.google_email) {
+      if (googleBadge) {
+        googleBadge.textContent = 'CONNECTED';
+        googleBadge.className = 'badge badge-completed';
+      }
+      if (googleConnectedView) googleConnectedView.style.display = 'flex';
+      if (googleDisconnectedView) googleDisconnectedView.style.display = 'none';
+      if (googleConnectedEmail) googleConnectedEmail.textContent = s.google_email;
+    } else {
+      if (googleBadge) {
+        googleBadge.textContent = s.google_oauth_configured ? 'NOT CONNECTED' : 'UNCONFIGURED';
+        googleBadge.className = 'badge badge-topic';
+      }
+      if (googleConnectedView) googleConnectedView.style.display = 'none';
+      if (googleDisconnectedView) googleDisconnectedView.style.display = 'block';
+      if (googleConfigNote) {
+        googleConfigNote.innerHTML = s.google_oauth_configured
+          ? 'Ready to connect. Click "Sign in with Google" to grant <code class="inline-code">gmail.send</code> permissions.'
+          : 'Requires <code class="inline-code">GOOGLE_OAUTH_CLIENT_ID</code> &amp; <code class="inline-code">GOOGLE_OAUTH_CLIENT_SECRET</code> in Vercel environment variables.';
+      }
+    }
+
     syncQuietHoursInputs();
   } catch (err) {
     console.error('Error loading settings:', err);
@@ -571,7 +600,7 @@ async function sendTestEmail() {
     if (data.status === 'simulated' || data.delivered === false) {
       showToast(
         data.message ||
-          'SMTP could not send. Showing preview. Fix SMTP_* and USER_EMAIL in Vercel env.',
+          'Could not dispatch live email. Showing preview.',
         'error'
       );
       if (data.html_preview && typeof openEmailPreviewModal === 'function') {
@@ -580,10 +609,73 @@ async function sendTestEmail() {
       return;
     }
 
-    showToast(data.message || `Email sent to ${data.target_email || 'your inbox'}.`);
+    const providerLabel = data.provider === 'gmail_api' ? 'Gmail API' : 'SMTP';
+    showToast(data.message || `Email sent via ${providerLabel} to ${data.target_email || 'your inbox'}!`);
   } catch (e) {
     showToast('Test email failed: ' + e.message, 'error');
   }
+}
+
+async function connectGoogleAccount() {
+  try {
+    showToast('Initializing Google Sign-in...', 'info');
+    const res = await fetch('/api/auth/google/url');
+    const data = await res.json();
+    if (!data.configured || !data.url) {
+      alert(
+        'Google OAuth Credentials Missing!\n\n' +
+        'To enable Sign in with Google & Gmail API in production:\n' +
+        '1. Go to Google Cloud Console (console.cloud.google.com) -> APIs & Services -> Credentials\n' +
+        '2. Create OAuth 2.0 Client ID (Web Application)\n' +
+        '3. Add Authorized redirect URI:\n   ' + (data.redirect_uri || 'https://codecoach-blush.vercel.app/api/auth/google/callback') + '\n' +
+        '4. Add to Vercel Project -> Settings -> Environment Variables:\n' +
+        '   - GOOGLE_OAUTH_CLIENT_ID\n   - GOOGLE_OAUTH_CLIENT_SECRET\n' +
+        '5. Redeploy.'
+      );
+      return;
+    }
+    window.location.href = data.url;
+  } catch (err) {
+    showToast('Google OAuth initialization error: ' + err.message, 'error');
+  }
+}
+
+async function disconnectGoogleAccount() {
+  if (!confirm('Disconnect your Google account? Real email transmissions via Gmail API will stop.')) {
+    return;
+  }
+  try {
+    const res = await fetch('/api/auth/google/disconnect', { method: 'POST' });
+    const data = await res.json();
+    showToast(data.message || 'Google account disconnected.');
+    await loadSettingsView();
+  } catch (err) {
+    showToast('Failed to disconnect Google account: ' + err.message, 'error');
+  }
+}
+
+function checkGoogleOAuthReturnParams() {
+  const fullUrl = window.location.href;
+  if (fullUrl.includes('google=connected')) {
+    const params = new URLSearchParams(window.location.search || window.location.hash.split('?')[1] || '');
+    const email = params.get('email') || '';
+    showToast(`🦇 Google Account connected successfully! Real Gmail transmissions enabled for ${email || 'your account'}.`);
+    if (window.history && window.history.replaceState) {
+      const cleanUrl = window.location.href.replace(/([?&])google=connected[^&]*/g, '').replace(/[?&]$/, '');
+      window.history.replaceState(null, '', cleanUrl);
+    }
+  } else if (fullUrl.includes('google=error')) {
+    const params = new URLSearchParams(window.location.search || window.location.hash.split('?')[1] || '');
+    const detail = params.get('detail') || 'Authorization was cancelled or failed.';
+    showToast('Google authorization failed: ' + decodeURIComponent(detail), 'error');
+  }
+}
+
+// Check on load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', checkGoogleOAuthReturnParams);
+} else {
+  checkGoogleOAuthReturnParams();
 }
 
 function openEmailPreviewModal(data) {
@@ -618,5 +710,7 @@ function closeEmailPreviewModal() {
 }
 
 window.registerCurrentDevice = registerCurrentDevice;
+window.connectGoogleAccount = connectGoogleAccount;
+window.disconnectGoogleAccount = disconnectGoogleAccount;
 window.openEmailPreviewModal = openEmailPreviewModal;
 window.closeEmailPreviewModal = closeEmailPreviewModal;
