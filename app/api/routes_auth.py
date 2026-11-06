@@ -122,3 +122,4 @@ async def disconnect_google_account(db: Session = Depends(get_db)):
     sync_google_auth_to_blob(db)
     logger.info("Google Account disconnected by user")
     return {"status": "disconnected", "message": "Google account disconnected successfully."}
+

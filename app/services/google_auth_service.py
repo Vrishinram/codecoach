@@ -244,3 +244,4 @@ def send_email_via_gmail_api(
     except Exception as e:
         logger.error("Gmail API error: %s", e)
         raise
+
